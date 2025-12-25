@@ -1,8 +1,5 @@
-const CACHE_NAME = 'greenspoon-v1.2';
+const CACHE_NAME = 'greenspoon-v1.3';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
   '/coolerbox.jpg',
   '/logo.png'
 ];
@@ -13,14 +10,44 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
   );
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
 });
 
-// Fetch from cache first, then network
+// Network first, then cache (for HTML and API calls)
+// Cache first for images only
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+  const url = new URL(event.request.url);
+  
+  // Skip caching for API calls
+  if (url.pathname.startsWith('/api/')) {
+    return event.respondWith(fetch(event.request));
+  }
+  
+  // For images, use cache first
+  if (url.pathname.endsWith('.jpg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.svg')) {
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => response || fetch(event.request))
+    );
+  } else {
+    // For HTML and other files, use network first for fresh content
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Clone the response and cache it
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          // If network fails, try cache
+          return caches.match(event.request);
+        })
+    );
+  }
 });
 
 // Clean up old caches
@@ -36,4 +63,6 @@ self.addEventListener('activate', event => {
       );
     })
   );
+  // Take control of all pages immediately
+  return self.clients.claim();
 });

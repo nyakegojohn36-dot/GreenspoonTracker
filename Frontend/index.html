@@ -1517,6 +1517,22 @@
             }
         }
 
+        // Auto-refresh data every 10 seconds to sync with other devices
+        let autoRefreshInterval;
+        function startAutoRefresh() {
+            // Refresh data every 10 seconds
+            autoRefreshInterval = setInterval(() => {
+                console.log('🔄 Auto-refreshing data...');
+                loadAllData();
+            }, 10000); // 10 seconds
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Greenspoon Box Tracker v1.2 Initializing...');
@@ -1536,6 +1552,10 @@
             
             // Test backend connection
             testBackendConnection();
+            
+            // Start auto-refresh for real-time sync
+            startAutoRefresh();
+            console.log('✅ Auto-refresh enabled (every 10 seconds)');
         });
 
         function updateDateTime() {
