@@ -1,0 +1,3267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- QR Code Scanner -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff6b35">
+    <meta name="description" content="Greenspoon Box Tracking System for deliveries">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Greenspoon Box Tracker</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/coolerbox.jpg">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Enhanced Professional Design System */
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #4caf50;
+            --dark-green: #1b5e20;
+            --accent-orange: #ff9800;
+            --accent-blue: #2196F3;
+            --bg-light: #f5f7fa;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e3f2fd 100%);
+            min-height: 100vh;
+            padding-bottom: 30px;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        /* Enhanced Navbar */
+        .navbar-greenspoon {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            padding: 1rem 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+        }
+        
+        .navbar-brand:hover {
+            transform: translateY(-2px);
+        }
+        
+        .navbar-brand img {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            transition: var(--transition);
+        }
+        
+        .navbar-brand:hover img {
+            transform: scale(1.05);
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        
+        /* Enhanced Dashboard Cards */
+        .dashboard-card {
+            background: white;
+            border-radius: 20px;
+            border: none;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--light-green), var(--accent-orange));
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            box-shadow: 0 8px 16px rgba(46, 125, 50, 0.3);
+            position: relative;
+        }
+        
+        .card-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--light-green), var(--accent-orange));
+            opacity: 0;
+            z-index: -1;
+            transition: var(--transition);
+        }
+        
+        .dashboard-card:hover .card-icon::after {
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+        
+        .card-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+        
+        /* Enhanced Tab Navigation */
+        .nav-tabs {
+            border: none;
+            margin-bottom: 0;
+            background: white;
+            border-radius: 15px 15px 0 0;
+            padding: 10px 10px 0 10px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            font-weight: 600;
+            border: none;
+            padding: 14px 28px;
+            margin-right: 8px;
+            border-radius: 12px 12px 0 0;
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-tabs .nav-link i {
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--primary-green);
+            background: linear-gradient(to bottom, rgba(46, 125, 50, 0.08), transparent);
+            transform: translateY(-2px);
+        }
+        
+        .nav-tabs .nav-link:hover i {
+            transform: scale(1.15);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+        
+        .nav-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: var(--accent-orange);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        /* Enhanced Tab Content */
+        .tab-content {
+            background: white;
+            border-radius: 0 0 20px 20px;
+            padding: 35px;
+            box-shadow: var(--shadow-md);
+            min-height: 500px;
+        }
+        
+        /* Enhanced Scanner Container */
+        .scanner-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-md);
+            height: 100%;
+            border: 2px solid rgba(46, 125, 50, 0.1);
+            transition: var(--transition);
+        }
+        
+        .scanner-container:hover {
+            border-color: var(--light-green);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .scanner-container h4 {
+            font-weight: 700;
+            color: var(--dark-green);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--light-green);
+        }
+        
+        /* Enhanced Buttons */
+        .btn-greenspoon {
+            background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-greenspoon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-greenspoon:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-greenspoon:hover {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-green) 100%);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        }
+        
+        .btn-greenspoon:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline-greenspoon {
+            color: var(--primary-green);
+            border: 2px solid var(--primary-green);
+            background: transparent;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-outline-greenspoon:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+        
+        /* Enhanced Form Controls */
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--light-green);
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.15);
+            outline: none;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-green);
+            margin-bottom: 8px;
+        }
+        
+        /* Enhanced Tables */
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .table-success {
+            background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+            color: white;
+        }
+        
+        .table-success th {
+            border: none;
+            font-weight: 700;
+            padding: 16px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody tr {
+            transition: var(--transition);
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(46, 125, 50, 0.05);
+            transform: scale(1.01);
+        }
+        
+        /* Enhanced Badges */
+        .box-type-big {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+        
+        .status-available {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+        }
+        
+        .status-in_transit {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+        }
+        
+        /* Enhanced Workflow Steps */
+        .workflow-step {
+            background: linear-gradient(to right, rgba(46, 125, 50, 0.05), white);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary-green);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        
+        .workflow-step:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateX(5px);
+        }
+        
+        .step-number {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--light-green), var(--primary-green));
+            color: white;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+        
+        /* Enhanced Box List Items */
+        .box-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+        
+        .box-list-item:hover {
+            background: linear-gradient(to right, rgba(46, 125, 50, 0.05), white);
+            border-color: var(--light-green);
+            transform: translateX(5px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Enhanced QR Scanner */
+        .qr-scanner-container {
+            width: 100%;
+            max-width: 450px;
+            margin: 20px auto;
+            border: 3px solid var(--light-green);
+            border-radius: 15px;
+            overflow: hidden;
+            min-height: 300px;
+            background: #f8f9fa;
+            box-shadow: var(--shadow-md);
+        }
+        
+        /* Enhanced Alerts */
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1976d2;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #388e3c;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .alert-warning {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #f57c00;
+            border-left: 4px solid #ff9800;
+        }
+        
+        /* Enhanced Cards */
+        .card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+            font-weight: 700;
+            padding: 18px 24px;
+        }
+        
+        /* Enhanced Animations */
+        .fade-in {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+        
+        /* Enhanced Responsive Design */
+        @media (max-width: 768px) {
+            .nav-tabs .nav-link {
+                padding: 12px 18px;
+                font-size: 0.85rem;
+                margin-right: 4px;
+            }
+            
+            .tab-content {
+                padding: 20px;
+                border-radius: 0 0 20px 20px;
+            }
+            
+            .scanner-container {
+                padding: 20px;
+            }
+            
+            .btn-greenspoon, .btn-outline-greenspoon {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Enhanced Return Box Items */
+        .return-box-item {
+            padding: 15px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: white;
+            transition: var(--transition);
+        }
+        
+        .return-box-item:hover {
+            background: linear-gradient(to right, rgba(46, 125, 50, 0.05), white);
+            border-color: var(--light-green);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Enhanced Modal */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .modal-header {
+            border-radius: 20px 20px 0 0;
+            background: linear-gradient(135deg, var(--light-green), var(--primary-green));
+            color: white;
+            border: none;
+            padding: 20px 24px;
+        }
+        
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .modal-footer {
+            border: none;
+            padding: 20px 24px;
+        }
+        
+        /* Enhanced Toast */
+        .toast {
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            border: none;
+        }
+        
+        /* Loading State */
+        .spinner-border {
+            border-width: 3px;
+        }
+        
+        /* Enhanced Action Buttons Container */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--light-green), var(--primary-green));
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-green);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-greenspoon sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../logo.png" alt="Greenspoon Logo" style="height: 40px; margin-right: 10px;">
+                <span class="ms-2">Box Tracker</span>
+                <span class="badge bg-light text-success ms-2">v1.2</span>
+            </a>
+            <div class="text-white d-flex align-items-center">
+                <i class="fas fa-clock me-2"></i>
+                <span id="currentDateTime" class="fw-medium"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container py-4">
+        <!-- Dashboard Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="card-icon mb-3">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <h2 class="display-6 fw-bold mb-2" id="totalBoxes">0</h2>
+                        <p class="text-muted mb-0">Total Boxes</p>
+                        <small class="text-success">
+                            <i class="fas fa-check-circle me-1"></i>Ready
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="card-icon mb-3">
+                            <i class="fas fa-truck-moving"></i>
+                        </div>
+                        <h2 class="display-6 fw-bold mb-2" id="availableBoxes">0</h2>
+                        <p class="text-muted mb-0">Available</p>
+                        <small class="text-info">
+                            <i class="fas fa-exchange-alt me-1"></i>Ready
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="card-icon mb-3">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <h2 class="display-6 fw-bold mb-2" id="totalRiders">0</h2>
+                        <p class="text-muted mb-0">Total Riders</p>
+                        <small class="text-warning">
+                            <i class="fas fa-users me-1"></i>Active
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="card-icon mb-3">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        <h2 class="display-6 fw-bold mb-2" id="activeTrips">0</h2>
+                        <p class="text-muted mb-0">Active Trips</p>
+                        <small class="text-danger">
+                            <i class="fas fa-road me-1"></i>In Progress
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Status Alert -->
+        <div id="connectionAlert" class="alert alert-info d-flex align-items-center" style="display: none !important;">
+            <i class="fas fa-sync-alt fa-spin me-2"></i>
+            <span>Connecting to backend...</span>
+        </div>
+
+        <!-- Main Tabs Navigation -->
+        <ul class="nav nav-tabs mb-0" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="scanner-tab" data-bs-toggle="tab" data-bs-target="#scanner" type="button">
+                    <i class="fas fa-qrcode me-2"></i>Box Scanner
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="departure-tab" data-bs-toggle="tab" data-bs-target="#departure" type="button">
+                    <i class="fas fa-paper-plane me-2"></i>Departure Mode
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="return-tab" data-bs-toggle="tab" data-bs-target="#return" type="button">
+                    <i class="fas fa-undo me-2"></i>Return Mode
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="boxes-tab" data-bs-toggle="tab" data-bs-target="#boxes" type="button">
+                    <i class="fas fa-boxes me-2"></i>Box Management
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="riders-tab" data-bs-toggle="tab" data-bs-target="#riders" type="button">
+                    <i class="fas fa-users me-2"></i>Rider Management
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="trips-tab" data-bs-toggle="tab" data-bs-target="#trips" type="button">
+                    <i class="fas fa-shipping-fast me-2"></i>Trip History
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Reports
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button">
+                    <i class="fas fa-chart-bar me-2"></i>Analytics
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="mainTabsContent">
+            <!-- Scanner Tab -->
+            <div class="tab-pane fade show active" id="scanner" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="scanner-container">
+                            <h4 class="mb-4">
+                                <i class="fas fa-qrcode me-2 text-success"></i>Box Scanner
+                            </h4>
+                            
+                            <div class="alert alert-info mb-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>How to use:</strong> Enter box number manually or use QR scanner
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Enter Box Number</label>
+                                <div class="input-group">
+                                    <input type="text" id="manualBoxInput" class="form-control form-control-lg" 
+                                           placeholder="GS-B - 001">
+                                    <button class="btn btn-greenspoon" type="button" onclick="processManualBox()">
+                                        <i class="fas fa-search me-1"></i>Search
+                                    </button>
+                                </div>
+                                <small class="text-muted">Format: GS-B - 001</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="scanner-container h-100">
+                            <h4 class="mb-4">
+                                <i class="fas fa-info-circle me-2 text-success"></i>Box Information
+                            </h4>
+                            
+                            <div id="boxInfo" class="text-center py-5">
+                                <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Box Selected</h5>
+                                <p class="text-muted">Enter a box number to view details</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========== DEPARTURE MODE TAB =========== -->
+            <div class="tab-pane fade" id="departure" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h4 class="mb-4">
+                            <i class="fas fa-paper-plane me-2 text-success"></i>Departure Mode
+                        </h4>
+                        
+                        <!-- Step 1: Select Rider -->
+                        <div class="workflow-step fade-in" id="step1Section">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="step-number">1</span>
+                                <h5 class="mb-0">Select Rider</h5>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Search & Choose Rider</label>
+                                <input type="text" class="form-control mb-2" id="riderSearchInput" 
+                                       placeholder="🔍 Search by name or ID..." 
+                                       oninput="filterRiders()">
+                                <select class="form-select" id="riderSelect" size="5" style="max-height: 200px;">
+                                    <option value="">-- Select a rider --</option>
+                                    <!-- Riders will be populated by JavaScript -->
+                                </select>
+                                <small class="text-muted">Type to search, then click to select</small>
+                            </div>
+                            
+                            <!-- Selected Rider Info -->
+                            <div id="selectedRiderInfo" class="alert alert-success" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Selected Rider:</strong> 
+                                        <span id="riderDisplayName"></span> 
+                                        (<span id="riderDisplayId"></span>)
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="clearSelectedRider()">
+                                        <i class="fas fa-times me-1"></i>Change
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Scan Boxes -->
+                        <div class="workflow-step" id="scanBoxesSection" style="display: none;">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="step-number">2</span>
+                                <h5 class="mb-0">Add Boxes to Trip</h5>
+                            </div>
+                            
+                            <div id="noRiderWarning" class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Please select a rider first
+                            </div>
+                            
+                            <!-- QR Scanner Toggle -->
+                            <div class="mb-3">
+                                <div class="d-flex gap-2 mb-2">
+                                    <button class="btn btn-outline-success" id="toggleQrBtn" onclick="toggleQrScanner()">
+                                        <i class="fas fa-qrcode me-1"></i>Open QR Scanner
+                                    </button>
+                                    <button class="btn btn-outline-primary" onclick="focusManualInput()">
+                                        <i class="fas fa-keyboard me-1"></i>Manual Entry
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- QR Scanner Container -->
+                            <div id="qrScannerContainer" class="qr-scanner-container" style="display: none;">
+                                <div id="qrReader" style="width: 100%;"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Enter Box Number</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="tripBoxInput" placeholder="GS-B - 001" autofocus>
+                                    <button class="btn btn-greenspoon" type="button" onclick="addBoxToTrip()">
+                                        <i class="fas fa-plus me-1"></i>Add Box
+                                    </button>
+                                </div>
+                                <small class="text-muted">Press Enter or click Add Box to add</small>
+                            </div>
+                            
+                            <!-- Added Boxes List -->
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6>Added Boxes <span class="badge bg-primary" id="boxCountBadge">0</span></h6>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="clearTripBoxes()">
+                                        <i class="fas fa-trash me-1"></i>Clear All
+                                    </button>
+                                </div>
+                                <div id="tripBoxesList" class="mb-3">
+                                    <!-- Boxes will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Confirm Departure -->
+                        <div class="workflow-step" id="confirmTripSection" style="display: none;">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="step-number">3</span>
+                                <h5 class="mb-0">Confirm Departure</h5>
+                            </div>
+                            
+                            <div id="noBoxesWarning" class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Please add at least one box to confirm departure
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Destination <span class="text-danger">*</span></label>
+                                <select class="form-select" id="tripDestination" required>
+                                    <option value="">-- Select Destination --</option>
+                                    <option value="LORESHO">LORESHO</option>
+                                    <option value="NYARI">NYARI</option>
+                                    <option value="GIGIRI">GIGIRI</option>
+                                    <option value="RUNDA">RUNDA</option>
+                                    <option value="KAREN">KAREN</option>
+                                    <option value="KILIMANI">KILIMANI</option>
+                                </select>
+                                <small class="text-muted">Required field</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Notes (Optional)</label>
+                                <textarea class="form-control" id="tripNotes" rows="2" placeholder="Any notes about this trip..."></textarea>
+                            </div>
+                            
+                            <!-- Trip Summary -->
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Trip Summary</h6>
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <small class="text-muted">Rider</small>
+                                            <div class="fw-bold" id="summaryRiderName">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted">Date</small>
+                                            <div class="fw-bold" id="summaryDate">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted">Boxes</small>
+                                            <div class="fw-bold" id="summaryBoxCount">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success" onclick="confirmTripDeparture()">
+                                    <i class="fas fa-check-circle me-2"></i>Confirm Departure
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="cancelTrip()">
+                                    <i class="fas fa-times me-2"></i>Cancel Trip
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Departures Sidebar -->
+                    <div class="col-lg-4">
+                        <div class="scanner-container h-100">
+                            <h5 class="mb-3">
+                                <i class="fas fa-history me-2 text-success"></i>Recent Departures
+                            </h5>
+                            
+                            <div id="recentDepartures">
+                                <div class="alert alert-light border">
+                                    <div class="text-center text-muted py-3">
+                                        <i class="fas fa-clock fa-2x mb-2"></i>
+                                        <p>No recent departures</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="small text-muted">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Today's Departures:</span>
+                                    <span class="fw-bold" id="todayDepartures">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Active Trips:</span>
+                                    <span class="fw-bold" id="activeTripsCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========== RETURN MODE TAB =========== -->
+            <div class="tab-pane fade" id="return" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h4 class="mb-4">
+                            <i class="fas fa-undo me-2 text-success"></i>Return Mode
+                        </h4>
+                        
+                        <!-- RETURN TYPE SELECTION -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-filter me-2"></i>Select Return Type
+                                </h5>
+                                <div class="btn-group w-100" role="group">
+                                    <button type="button" id="returnAvailableBtn" class="btn btn-outline-success active">
+                                        <i class="fas fa-check-circle me-2"></i>Return to Inventory
+                                    </button>
+                                    <button type="button" id="returnRepairBtn" class="btn btn-outline-warning">
+                                        <i class="fas fa-tools me-2"></i>Needs Repair
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-box me-1"></i>
+                                        <span id="returnBoxCount">0</span> boxes found
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOXES LIST -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-boxes me-2"></i>Boxes for Return
+                                    </h5>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary me-2" onclick="selectAllReturnBoxes()">
+                                            <i class="fas fa-check-square me-1"></i>Select All
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="clearReturnSelection()">
+                                            <i class="fas fa-square me-1"></i>Clear
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Boxes list container -->
+                                <div id="returnBoxesList" class="mb-3" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Boxes will be loaded here -->
+                                </div>
+                                
+                                <!-- Batch process button -->
+                                <div class="d-grid">
+                                    <button id="processBatchReturnBtn" class="btn btn-success" onclick="processBatchReturn()">
+                                        <i class="fas fa-undo me-2"></i>Process Selected Returns
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- SCANNER SECTION -->
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-camera me-2"></i>QR Scanner
+                                </h5>
+                                
+                                <!-- QR Scanner Container for Return Mode -->
+                                <div id="returnQrScannerContainer" style="display: none;">
+                                    <div id="returnQrReader" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
+                                </div>
+                                
+                                <div class="d-grid gap-2 mt-3">
+                                    <button id="toggleReturnQrBtn" class="btn btn-primary" onclick="toggleReturnQrScanner()">
+                                        <i class="fas fa-camera me-2"></i>Start QR Scanner
+                                    </button>
+                                </div>
+                                <small class="text-muted">Scan box QR codes to process returns</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- RIGHT SIDEBAR -->
+                    <div class="col-lg-4">
+                        <!-- RIDER FILTER -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-user me-2"></i>Filter by Rider
+                                </h5>
+                                <select id="returnRiderSelect" class="form-select">
+                                    <option value="">All Riders</option>
+                                    <!-- Riders will be loaded here -->
+                                </select>
+                                <small class="text-muted">Select a rider to see boxes assigned to them</small>
+                            </div>
+                        </div>
+                        
+                        <!-- QUICK ACTIONS -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                                </h5>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary" onclick="refreshAllData()">
+                                        <i class="fas fa-sync-alt me-2"></i>Refresh All Data
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="switchToTab('boxes')">
+                                        <i class="fas fa-box me-2"></i>Go to Boxes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- RETURN STATS -->
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-chart-pie me-2"></i>Return Stats
+                                </h5>
+                                <div class="row text-center">
+                                    <div class="col-6 mb-3">
+                                        <div class="p-3 bg-light rounded">
+                                            <h4 id="availableBoxesCount" class="text-success">0</h4>
+                                            <small class="text-muted">Available Boxes</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="p-3 bg-light rounded">
+                                            <h4 id="inTransitBoxesCount" class="text-warning">0</h4>
+                                            <small class="text-muted">In Transit</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Box Management Tab -->
+            <div class="tab-pane fade" id="boxes" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-boxes me-2 text-success"></i>Box Management
+                    </h4>
+                    <div class="action-buttons">
+                        <button class="btn btn-outline-greenspoon" onclick="refreshAllData()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                        <button class="btn btn-greenspoon" onclick="showAddBoxModal()">
+                            <i class="fas fa-plus me-1"></i>Add Box
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover" id="boxesTable">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Box Number</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="boxesTableBody">
+                            <!-- Boxes loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Rider Management Tab -->
+            <div class="tab-pane fade" id="riders" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users me-2 text-success"></i>Rider Management
+                    </h4>
+                    <button class="btn btn-greenspoon" onclick="showAddRiderModal()">
+                        <i class="fas fa-user-plus me-1"></i>Add New Rider
+                    </button>
+                </div>
+                
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="ridersGrid">
+                    <!-- Riders loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Trip History Tab -->
+            <div class="tab-pane fade" id="trips" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shipping-fast me-2 text-success"></i>Trip History
+                    </h4>
+                    <div class="action-buttons">
+                        <button class="btn btn-outline-greenspoon" onclick="refreshTrips()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filter Controls -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="tripStatusFilter" onchange="loadTrips()">
+                            <option value="all" selected>All Statuses</option>
+                            <option value="departed">Departed</option>
+                            <option value="returned">Returned</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Search</label>
+                        <input type="text" class="form-control" id="tripSearch" placeholder="Search trips..." onkeyup="searchTrips()">
+                    </div>
+                </div>
+                
+                <!-- Trips Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Trip ID</th>
+                                <th>Rider</th>
+                                <th>Boxes</th>
+                                <th>Departure Time</th>
+                                <th>Return Status</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tripsTableBody">
+                            <!-- Trips loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-pane fade" id="reports" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Overdue Reports
+                    </h4>
+                    <div class="action-buttons">
+                        <button class="btn btn-outline-greenspoon" onclick="refreshReports()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>This report shows:</strong> Riders with active trips and trips that haven't been returned within 24 hours
+                </div>
+
+                <!-- Overdue Trips -->
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>Overdue Trips (>24 Hours)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="overdueTripsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Trip ID</th>
+                                        <th>Rider</th>
+                                        <th>Rider ID</th>
+                                        <th>Boxes Out</th>
+                                        <th>Departure Time</th>
+                                        <th>Hours Overdue</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overdueTripsBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            <i class="fas fa-spinner fa-spin me-2"></i>Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Active Trips -->
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shipping-fast me-2"></i>All Active Trips (Unreturned Boxes)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="activeTripsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Trip ID</th>
+                                        <th>Rider</th>
+                                        <th>Rider ID</th>
+                                        <th>Boxes Out</th>
+                                        <th>Departure Time</th>
+                                        <th>Duration</th>
+                                        <th>Destination</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activeTripsBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            <i class="fas fa-spinner fa-spin me-2"></i>Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-pane fade" id="analytics" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="scanner-container">
+                            <h4 class="mb-4">
+                                <i class="fas fa-chart-bar me-2 text-success"></i>Box Status Distribution
+                            </h4>
+                            <canvas id="statusChart" height="250"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="scanner-container h-100">
+                            <h4 class="mb-4">
+                                <i class="fas fa-info-circle me-2 text-success"></i>Quick Stats
+                            </h4>
+                            <div class="list-group">
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    Available Boxes
+                                    <span class="badge bg-success rounded-pill" id="quickAvailableBoxes">0</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    In Transit
+                                    <span class="badge bg-warning rounded-pill" id="quickInTransitBoxes">0</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    Total Riders
+                                    <span class="badge bg-primary rounded-pill" id="quickActiveRiders">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========== MODALS =========== -->
+    
+    <!-- Add Box Modal -->
+    <div class="modal fade" id="addBoxModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Box</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Box Type Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Box Type</label>
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" id="boxTypeB" class="btn btn-outline-primary active" onclick="selectBoxType('B')">
+                                <i class="fas fa-box me-1"></i> Big (B)
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-1">All boxes are Big type (B)</small>
+                    </div>
+                    
+                    <!-- Box Number Input -->
+                    <div class="mb-3">
+                        <label for="boxNumberSuffix" class="form-label">Box Number</label>
+                        
+                        <!-- QR Scanner for Box Registration -->
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="toggleBoxRegistrationQr()">
+                                <i class="fas fa-camera me-1"></i><span id="boxQrBtnText">Scan QR Code</span>
+                            </button>
+                        </div>
+                        
+                        <div id="boxQrScannerContainer" style="display: none;" class="mb-3">
+                            <div id="boxQrReader" style="width: 100%;"></div>
+                        </div>
+                        
+                        <div class="text-center my-2">
+                            <small class="text-muted">OR enter manually</small>
+                        </div>
+                        
+                        <div class="input-group">
+                            <span class="input-group-text">GS-</span>
+                            <span class="input-group-text" id="boxTypeDisplay">B</span>
+                            <span class="input-group-text"> - </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="boxNumberSuffix" 
+                                   placeholder="001"
+                                   oninput="updateBoxPreview()"
+                                   maxlength="4">
+                        </div>
+                        <div class="form-text mt-1">
+                            Preview: <span id="boxPreview" class="fw-bold text-primary">GS-B - 001</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewBox()">
+                        <i class="fas fa-save me-1"></i> Save Box
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Rider Modal -->
+    <div class="modal fade" id="addRiderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>Add New Rider
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Rider ID *</label>
+                        <input type="text" class="form-control" id="newRiderId" placeholder="R-001" required>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" id="newRiderName" placeholder="John Doe" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveNewRider()">
+                        <i class="fas fa-save me-1"></i>Save Rider
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Backend API Configuration - Auto-detect server location
+        const isHTTPS = window.location.protocol === 'https:';
+        const hostname = window.location.hostname;
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+        
+        const API_BASE_URL = isLocal
+            ? (isHTTPS ? 'https://localhost:3443' : 'http://localhost:3000')
+            : (isHTTPS ? `https://${hostname}:3443` : `http://${hostname}:3000`);
+        
+        console.log('🌐 API URL:', API_BASE_URL);
+        console.log('🔒 Protocol:', window.location.protocol);
+        
+        // Global variables
+        let currentBoxes = [];
+        let currentRiders = [];
+        let currentTrips = [];
+        let currentReturnType = 'available';
+        let selectedRider = null;
+        let tripBoxes = [];
+        let selectedReturnBoxes = new Set();
+        
+        // Audio context for beep sound
+        let audioContext = null;
+        
+        // Function to play success beep
+        function playSuccessBeep() {
+            try {
+                // Initialize audio context if not already done
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Create oscillator for beep sound
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // Configure beep (800Hz, 150ms duration)
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                // Set volume envelope (fade in/out)
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.15);
+                
+                // Connect and play
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.15);
+            } catch (error) {
+                console.log('Audio not available:', error);
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Greenspoon Box Tracker v1.2 Initializing...');
+            
+            // Update date time
+            updateDateTime();
+            setInterval(updateDateTime, 60000);
+            
+            // Initialize tabs
+            initializeTabs();
+            
+            // Load initial data
+            loadAllData();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Test backend connection
+            testBackendConnection();
+        });
+
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('currentDateTime').textContent = 
+                now.toLocaleDateString('en-US', options);
+        }
+
+        function initializeTabs() {
+            const triggerTabList = [].slice.call(document.querySelectorAll('#mainTabs button'));
+            triggerTabList.forEach(function (triggerEl) {
+                const tabTrigger = new bootstrap.Tab(triggerEl);
+                triggerEl.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    tabTrigger.show();
+                    
+                    // Get the new tab ID
+                    const tabId = triggerEl.getAttribute('data-bs-target').replace('#', '');
+                    
+                    // Stop QR scanners when leaving their respective tabs
+                    if (tabId !== 'departure') {
+                        stopQrScanner();
+                    }
+                    if (tabId !== 'return') {
+                        stopReturnQrScanner();
+                    }
+                    
+                    // Load/refresh data for specific tabs
+                    if (tabId === 'boxes') {
+                        console.log('🔄 Boxes tab clicked, refreshing boxes...');
+                        // If no boxes loaded yet, load all data first
+                        if (currentBoxes.length === 0) {
+                            loadAllData();
+                        } else {
+                            updateBoxesTable();
+                        }
+                    } else if (tabId === 'riders') {
+                        console.log('🔄 Riders tab clicked, refreshing riders...');
+                        // If no riders loaded yet, load all data first
+                        if (currentRiders.length === 0) {
+                            loadAllData();
+                        } else {
+                            updateRidersGrid();
+                        }
+                    } else if (tabId === 'trips') {
+                        loadTrips();
+                    } else if (tabId === 'return') {
+                        loadReturnBoxes();
+                    } else if (tabId === 'analytics') {
+                        loadAnalytics();
+                    }
+                });
+            });
+        }
+
+        function setupEventListeners() {
+            // Manual box input enter key
+            document.getElementById('manualBoxInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') processManualBox();
+            });
+            
+            // Trip box input enter key
+            document.getElementById('tripBoxInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addBoxToTrip();
+            });
+            
+            // Return type buttons
+            document.getElementById('returnAvailableBtn').addEventListener('click', function() {
+                setReturnType('available');
+            });
+            
+            document.getElementById('returnRepairBtn').addEventListener('click', function() {
+                setReturnType('needs_repair');
+            });
+            
+            // Rider select change
+            document.getElementById('riderSelect').addEventListener('change', function() {
+                const riderId = this.value;
+                if (riderId) {
+                    selectRider(riderId);
+                }
+            });
+        }
+
+        function testBackendConnection() {
+            fetch(`${API_BASE_URL}/api/health`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('✅ Backend connection successful:', data);
+                })
+                .catch(error => {
+                    console.error('❌ Backend connection failed:', error);
+                    showToast('Backend connection failed. Please check if server is running.', 'danger');
+                });
+        }
+
+        function loadAllData() {
+            console.log('Loading all data...');
+            
+            Promise.all([
+                fetch(`${API_BASE_URL}/api/boxes`).then(r => r.json()),
+                fetch(`${API_BASE_URL}/api/riders`).then(r => r.json()),
+                fetch(`${API_BASE_URL}/api/trips`).then(r => r.json()),
+                fetch(`${API_BASE_URL}/api/stats/dashboard`).then(r => r.json())
+            ])
+            .then(([boxesData, ridersData, tripsData, statsData]) => {
+                console.log('📦 Boxes data:', boxesData);
+                console.log('👥 Riders data:', ridersData);
+                console.log('🚚 Trips data:', tripsData);
+                console.log('📊 Stats data:', statsData);
+                
+                // Process boxes - API returns {success: true, boxes: [...]}
+                if (boxesData.success && Array.isArray(boxesData.boxes)) {
+                    currentBoxes = boxesData.boxes;
+                    updateBoxesTable();
+                } else if (Array.isArray(boxesData)) {
+                    // Fallback for plain array format
+                    currentBoxes = boxesData;
+                    updateBoxesTable();
+                }
+                
+                // Process riders - API returns {success: true, riders: [...]}
+                if (ridersData.success && Array.isArray(ridersData.riders)) {
+                    currentRiders = ridersData.riders;
+                    updateRidersGrid();
+                    updateRiderSelect();
+                } else if (Array.isArray(ridersData)) {
+                    // Fallback for plain array format
+                    currentRiders = ridersData;
+                    updateRidersGrid();
+                    updateRiderSelect();
+                }
+                
+                // Process trips - API returns { success: true, trips: [...] }
+                if (tripsData.success && Array.isArray(tripsData.trips)) {
+                    currentTrips = tripsData.trips;
+                    updateRecentDepartures();
+                } else if (Array.isArray(tripsData)) {
+                    // Fallback if format changes
+                    currentTrips = tripsData;
+                    updateRecentDepartures();
+                }
+                
+                // Update stats - API returns plain object
+                updateDashboardStats(statsData);
+                
+                console.log('✅ All data loaded successfully');
+                console.log(`   - ${currentBoxes.length} boxes`);
+                console.log(`   - ${currentRiders.length} riders`);
+                console.log(`   - ${currentTrips.length} trips`);
+            })
+            .catch(error => {
+                console.error('❌ Error loading data:', error);
+                showToast('Failed to load data. Please try again.', 'danger');
+            });
+        }
+
+        function updateDashboardStats(stats) {
+            document.getElementById('totalBoxes').textContent = stats.total_boxes || 0;
+            document.getElementById('availableBoxes').textContent = stats.available_boxes || 0;
+            document.getElementById('totalRiders').textContent = stats.total_riders || 0;
+            document.getElementById('activeTrips').textContent = stats.active_trips || 0;
+            
+            // Update quick stats
+            document.getElementById('quickAvailableBoxes').textContent = stats.available_boxes || 0;
+            document.getElementById('quickInTransitBoxes').textContent = stats.in_transit_boxes || 0;
+            document.getElementById('quickActiveRiders').textContent = stats.total_riders || 0;
+        }
+
+        function updateBoxesTable() {
+            console.log('📦 updateBoxesTable called. currentBoxes:', currentBoxes);
+            console.log('📦 Number of boxes:', currentBoxes.length);
+            
+            const tbody = document.getElementById('boxesTableBody');
+            if (!tbody) {
+                console.error('❌ boxesTableBody element not found!');
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            if (!currentBoxes || currentBoxes.length === 0) {
+                console.log('⚠️ No boxes to display');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>No boxes found. Add boxes to get started.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            console.log('✅ Displaying', currentBoxes.length, 'boxes');
+            currentBoxes.forEach(box => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${box.box_number}</td>
+                    <td><span class="badge box-type-big">${box.box_type}</span></td>
+                    <td><span class="badge status-${box.status}">${box.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="viewBoxDetails('${box.box_number}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateRidersGrid() {
+            console.log('👥 updateRidersGrid called. currentRiders:', currentRiders);
+            console.log('👥 Number of riders:', currentRiders.length);
+            
+            const grid = document.getElementById('ridersGrid');
+            if (!grid) {
+                console.error('❌ ridersGrid element not found!');
+                return;
+            }
+            
+            grid.innerHTML = '';
+            
+            if (!currentRiders || currentRiders.length === 0) {
+                console.log('⚠️ No riders to display');
+                grid.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-light border text-center py-4">
+                            <i class="fas fa-users fa-2x mb-2 text-muted"></i>
+                            <p class="mb-0">No riders found. Add riders to get started.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log('✅ Displaying', currentRiders.length, 'riders');
+            currentRiders.forEach(rider => {
+                const col = document.createElement('div');
+                col.className = 'col';
+                col.innerHTML = `
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user-circle fa-3x text-success"></i>
+                            </div>
+                            <h5 class="card-title">${rider.name}</h5>
+                            <p class="card-text text-muted">${rider.rider_id}</p>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+        }
+
+        function updateRiderSelect() {
+            const select = document.getElementById('riderSelect');
+            select.innerHTML = '<option value="">-- Select a rider --</option>';
+            
+            currentRiders.forEach(rider => {
+                const option = document.createElement('option');
+                option.value = rider.rider_id;
+                option.textContent = `${rider.name} (${rider.rider_id})`;
+                option.dataset.name = rider.name.toLowerCase();
+                option.dataset.id = rider.rider_id.toLowerCase();
+                select.appendChild(option);
+            });
+        }
+        
+        function filterRiders() {
+            const searchInput = document.getElementById('riderSearchInput');
+            const select = document.getElementById('riderSelect');
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            // Show all options if search is empty
+            if (!searchTerm) {
+                Array.from(select.options).forEach(option => {
+                    if (option.value) { // Don't hide the placeholder
+                        option.style.display = '';
+                    }
+                });
+                return;
+            }
+            
+            // Filter options based on search term
+            Array.from(select.options).forEach(option => {
+                if (!option.value) {
+                    option.style.display = 'none'; // Hide placeholder when searching
+                    return;
+                }
+                
+                const name = option.dataset.name || '';
+                const id = option.dataset.id || '';
+                
+                if (name.includes(searchTerm) || id.includes(searchTerm)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        }
+
+        function updateRecentDepartures() {
+            const container = document.getElementById('recentDepartures');
+            // Filter to only show active (departed) trips
+            const activeTrips = currentTrips.filter(t => t.status === 'departed');
+            const recentTrips = activeTrips.slice(0, 5);
+            
+            if (recentTrips.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-light border">
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p>No active departures</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            recentTrips.forEach(trip => {
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>${trip.rider_name}</strong>
+                            <span class="badge bg-warning">
+                                ${trip.status}
+                            </span>
+                        </div>
+                        <small class="text-muted">${trip.boxes.length} boxes</small><br>
+                        <small>${formatDate(trip.departure_time)}</small>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Update counts
+            const activeTripCount = activeTrips.length;
+            const todayTrips = currentTrips.filter(t => {
+                const today = new Date().toDateString();
+                const tripDate = new Date(t.departure_time).toDateString();
+                return tripDate === today;
+            }).length;
+            
+            document.getElementById('activeTripsCount').textContent = activeTripCount;
+            document.getElementById('todayDepartures').textContent = todayTrips;
+        }
+
+        // Box Scanner Functions
+        function processManualBox() {
+            const boxNumber = document.getElementById('manualBoxInput').value.trim();
+            if (!boxNumber) {
+                showToast('Please enter a box number', 'warning');
+                return;
+            }
+            
+            fetch(`${API_BASE_URL}/api/boxes/${encodeURIComponent(boxNumber)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Box not found');
+                    }
+                    return response.json();
+                })
+                .then(box => {
+                    // API returns box object directly
+                    if (box && box.box_number) {
+                        displayBoxInfo(box);
+                    } else {
+                        showToast('Box not found', 'danger');
+                        displayBoxInfo(null);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching box:', error);
+                    showToast('Box not found', 'danger');
+                    displayBoxInfo(null);
+                });
+        }
+
+        function displayBoxInfo(box) {
+            const container = document.getElementById('boxInfo');
+            
+            if (!box) {
+                container.innerHTML = `
+                    <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Box Selected</h5>
+                    <p class="text-muted">Enter a box number to view details</p>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="text-start">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-box fa-4x text-success mb-3"></i>
+                        <h4 class="fw-bold">${box.box_number}</h4>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Type:</strong>
+                            <span class="badge box-type-big">
+                                ${box.box_type}
+                            </span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Status:</strong>
+                            <span class="badge status-${box.status}">
+                                ${box.status}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Last Updated:</strong><br>
+                        ${formatDate(box.last_updated || box.created_at)}
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-outline-primary" onclick="switchToTab('boxes')">
+                            <i class="fas fa-list me-2"></i>View All Boxes
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // QR Scanner instance
+        let qrScanner = null;
+        let qrScannerActive = false;
+        
+        // Return Mode QR Scanner
+        let returnQrScanner = null;
+        let returnQrScannerActive = false;
+        
+        // Box Registration QR Scanner
+        let boxRegQrScanner = null;
+        let boxRegQrScannerActive = false;
+
+        // Departure Mode Functions
+        function selectRider(riderId) {
+            const rider = currentRiders.find(r => r.rider_id === riderId);
+            if (!rider) {
+                showToast('Rider not found', 'danger');
+                return;
+            }
+            
+            selectedRider = rider;
+            
+            // Update UI
+            document.getElementById('selectedRiderInfo').style.display = 'block';
+            document.getElementById('riderDisplayName').textContent = rider.name;
+            document.getElementById('riderDisplayId').textContent = rider.rider_id;
+            
+            // Show next step
+            document.getElementById('scanBoxesSection').style.display = 'block';
+            document.getElementById('noRiderWarning').style.display = 'none';
+            
+            // Update trip summary
+            document.getElementById('summaryRiderName').textContent = rider.name;
+            document.getElementById('summaryDate').textContent = new Date().toLocaleDateString();
+            
+            // Automatically open QR scanner
+            setTimeout(() => {
+                startQrScanner();
+                showToast(`Rider selected: ${rider.name}. QR scanner ready!`, 'success');
+            }, 300);
+        }
+
+        function clearSelectedRider() {
+            selectedRider = null;
+            document.getElementById('selectedRiderInfo').style.display = 'none';
+            document.getElementById('riderSelect').value = '';
+            document.getElementById('scanBoxesSection').style.display = 'none';
+            document.getElementById('confirmTripSection').style.display = 'none';
+            document.getElementById('noRiderWarning').style.display = 'block';
+            tripBoxes = [];
+            updateTripBoxesList();
+            stopQrScanner();
+        }
+        
+        function startQrScanner() {
+            if (qrScannerActive) return;
+            
+            const qrReaderElement = document.getElementById('qrReader');
+            document.getElementById('qrScannerContainer').style.display = 'block';
+            document.getElementById('toggleQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
+            
+            if (!qrScanner) {
+                qrScanner = new Html5Qrcode("qrReader");
+            }
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            qrScanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    // On successful scan
+                    document.getElementById('tripBoxInput').value = decodedText;
+                    addBoxToTrip();
+                    // Play success sound or vibrate
+                    if (navigator.vibrate) navigator.vibrate(200);
+                },
+                (errorMessage) => {
+                    // Scanning errors are normal, ignore them
+                }
+            ).then(() => {
+                qrScannerActive = true;
+            }).catch((err) => {
+                console.error('QR Scanner error:', err);
+                showToast('Camera access denied or not available', 'warning');
+            });
+        }
+        
+        function stopQrScanner() {
+            if (qrScanner && qrScannerActive) {
+                qrScanner.stop().then(() => {
+                    qrScannerActive = false;
+                    document.getElementById('qrScannerContainer').style.display = 'none';
+                    document.getElementById('toggleQrBtn').innerHTML = '<i class="fas fa-qrcode me-1"></i>Open QR Scanner';
+                }).catch((err) => {
+                    console.error('Error stopping QR scanner:', err);
+                });
+            }
+        }
+        
+        function toggleQrScanner() {
+            if (qrScannerActive) {
+                stopQrScanner();
+            } else {
+                startQrScanner();
+            }
+        }
+        
+        function focusManualInput() {
+            stopQrScanner();
+            document.getElementById('tripBoxInput').focus();
+        }
+
+        function addBoxToTrip() {
+            if (!selectedRider) {
+                showToast('Please select a rider first', 'warning');
+                return;
+            }
+            
+            const boxNumber = document.getElementById('tripBoxInput').value.trim();
+            if (!boxNumber) {
+                showToast('Please enter a box number', 'warning');
+                return;
+            }
+            
+            // Check if box exists and is available
+            const box = currentBoxes.find(b => b.box_number === boxNumber);
+            if (!box) {
+                showToast(`Box ${boxNumber} not found`, 'danger');
+                return;
+            }
+            
+            if (box.status !== 'available') {
+                showToast(`Box ${boxNumber} is not available (status: ${box.status})`, 'warning');
+                return;
+            }
+            
+            // Check if box is already in trip
+            if (tripBoxes.includes(boxNumber)) {
+                showToast(`Box ${boxNumber} already added to trip`, 'info');
+                return;
+            }
+            
+            // Add to trip
+            tripBoxes.push(boxNumber);
+            document.getElementById('tripBoxInput').value = '';
+            updateTripBoxesList();
+            
+            // Show confirm section if we have boxes
+            if (tripBoxes.length > 0) {
+                document.getElementById('confirmTripSection').style.display = 'block';
+                document.getElementById('noBoxesWarning').style.display = 'none';
+            }
+            
+            showToast(`Box ${boxNumber} added to trip`, 'success');
+            playSuccessBeep(); // Play beep on successful box addition
+        }
+
+        function updateTripBoxesList() {
+            const container = document.getElementById('tripBoxesList');
+            const badge = document.getElementById('boxCountBadge');
+            
+            badge.textContent = tripBoxes.length;
+            document.getElementById('summaryBoxCount').textContent = tripBoxes.length;
+            
+            if (tripBoxes.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-3">No boxes added yet</div>';
+                return;
+            }
+            
+            let html = '';
+            tripBoxes.forEach((boxNumber, index) => {
+                const box = currentBoxes.find(b => b.box_number === boxNumber);
+                html += `
+                    <div class="box-list-item">
+                        <div>
+                            <strong>${boxNumber}</strong>
+                            <span class="badge box-type-big ms-2">
+                                ${box?.box_type || '?'}
+                            </span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeBoxFromTrip(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function removeBoxFromTrip(index) {
+            tripBoxes.splice(index, 1);
+            updateTripBoxesList();
+            
+            if (tripBoxes.length === 0) {
+                document.getElementById('confirmTripSection').style.display = 'none';
+                document.getElementById('noBoxesWarning').style.display = 'block';
+            }
+        }
+
+        function clearTripBoxes() {
+            tripBoxes = [];
+            updateTripBoxesList();
+            document.getElementById('confirmTripSection').style.display = 'none';
+            document.getElementById('noBoxesWarning').style.display = 'block';
+            showToast('All boxes cleared from trip', 'info');
+        }
+
+        function confirmTripDeparture() {
+            if (!selectedRider) {
+                showToast('Please select a rider', 'warning');
+                return;
+            }
+            
+            if (tripBoxes.length === 0) {
+                showToast('Please add at least one box to the trip', 'warning');
+                return;
+            }
+            
+            const destination = document.getElementById('tripDestination').value.trim();
+            const notes = document.getElementById('tripNotes').value.trim();
+            
+            // Validate destination is selected
+            if (!destination) {
+                showToast('Please select a destination', 'warning');
+                return;
+            }
+            
+            const tripData = {
+                rider_id: selectedRider.rider_id,
+                rider_name: selectedRider.name,
+                boxes: tripBoxes,
+                destination: destination,
+                notes: notes
+            };
+            
+            fetch(`${API_BASE_URL}/api/trips`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(tripData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Trip ${data.trip.trip_id} created successfully!`, 'success');
+                    
+                    // Reset form
+                    clearSelectedRider();
+                    clearTripBoxes();
+                    document.getElementById('tripDestination').value = '';
+                    document.getElementById('tripNotes').value = '';
+                    
+                    // Reload data
+                    setTimeout(() => {
+                        loadAllData();
+                        switchToTab('trips');
+                    }, 1000);
+                } else {
+                    showToast('Failed to create trip: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error creating trip:', error);
+                showToast('Error creating trip: ' + error.message, 'danger');
+            });
+        }
+
+        function cancelTrip() {
+            clearSelectedRider();
+            clearTripBoxes();
+            document.getElementById('tripDestination').value = '';
+            document.getElementById('tripNotes').value = '';
+            showToast('Trip cancelled', 'info');
+        }
+
+        // Return Mode Functions
+        function setReturnType(type) {
+            currentReturnType = type;
+            
+            // Update button styles
+            const availableBtn = document.getElementById('returnAvailableBtn');
+            const repairBtn = document.getElementById('returnRepairBtn');
+            
+            if (type === 'available') {
+                availableBtn.classList.add('active');
+                repairBtn.classList.remove('active');
+            } else {
+                availableBtn.classList.remove('active');
+                repairBtn.classList.add('active');
+            }
+            
+            // Load boxes
+            loadReturnBoxes();
+        }
+
+        function loadReturnBoxes() {
+            const type = currentReturnType === 'available' ? 'in_transit' : currentReturnType;
+            
+            fetch(`${API_BASE_URL}/api/return/boxes?type=${type}`)
+                .then(response => response.json())
+                .then(boxes => {
+                    updateReturnBoxesList(boxes);
+                })
+                .catch(error => {
+                    console.error('Error loading return boxes:', error);
+                    showToast('Failed to load boxes', 'danger');
+                });
+        }
+
+        function updateReturnBoxesList(boxes) {
+            const container = document.getElementById('returnBoxesList');
+            const countElement = document.getElementById('returnBoxCount');
+            
+            countElement.textContent = boxes.length;
+            
+            if (boxes.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No boxes found for this return type
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            boxes.forEach(box => {
+                const isSelected = selectedReturnBoxes.has(box.box_number);
+                html += `
+                    <div class="return-box-item">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="box-${box.box_number}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleReturnBox('${box.box_number}', this.checked)">
+                            <label class="form-check-label w-100" for="box-${box.box_number}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${box.box_number}</strong>
+                                        <span class="badge box-type-big ms-2">
+                                            ${box.box_type}
+                                        </span>
+                                    </div>
+                                    <span class="badge status-${box.status}">
+                                        ${box.status}
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function toggleReturnBox(boxNumber, selected) {
+            if (selected) {
+                selectedReturnBoxes.add(boxNumber);
+            } else {
+                selectedReturnBoxes.delete(boxNumber);
+            }
+        }
+
+        function selectAllReturnBoxes() {
+            const checkboxes = document.querySelectorAll('#returnBoxesList input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                const boxNumber = checkbox.id.replace('box-', '');
+                selectedReturnBoxes.add(boxNumber);
+            });
+        }
+
+        function clearReturnSelection() {
+            const checkboxes = document.querySelectorAll('#returnBoxesList input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                const boxNumber = checkbox.id.replace('box-', '');
+                selectedReturnBoxes.delete(boxNumber);
+            });
+        }
+
+        function toggleReturnQrScanner() {
+            if (returnQrScannerActive) {
+                stopReturnQrScanner();
+            } else {
+                startReturnQrScanner();
+            }
+        }
+        
+        function startReturnQrScanner() {
+            if (returnQrScannerActive) return;
+            
+            document.getElementById('returnQrScannerContainer').style.display = 'block';
+            document.getElementById('toggleReturnQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
+            
+            if (!returnQrScanner) {
+                returnQrScanner = new Html5Qrcode("returnQrReader");
+            }
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            returnQrScanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    console.log('Return QR scanned:', decodedText);
+                    processReturnBox(decodedText);
+                },
+                (error) => {
+                    // Ignore scan errors (happens continuously)
+                }
+            ).then(() => {
+                returnQrScannerActive = true;
+                console.log('Return QR scanner started');
+            }).catch(err => {
+                console.error('Failed to start return scanner:', err);
+                showToast('Failed to start camera', 'danger');
+            });
+        }
+        
+        function stopReturnQrScanner() {
+            if (!returnQrScannerActive || !returnQrScanner) return;
+            
+            returnQrScanner.stop().then(() => {
+                returnQrScannerActive = false;
+                document.getElementById('returnQrScannerContainer').style.display = 'none';
+                document.getElementById('toggleReturnQrBtn').innerHTML = '<i class="fas fa-camera me-2"></i>Start QR Scanner';
+                console.log('Return QR scanner stopped');
+            }).catch(err => {
+                console.error('Error stopping return scanner:', err);
+            });
+        }
+        
+        function processReturnBox(boxNumber) {
+            if (!boxNumber) {
+                showToast('Invalid box number', 'warning');
+                return;
+            }
+            
+            const condition = currentReturnType === 'available' ? 'available' : 'needs_repair';
+            
+            fetch(`${API_BASE_URL}/api/return/process`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    box_number: boxNumber,
+                    condition: condition
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Box ${boxNumber} returned as ${condition}`, 'success');
+                    playSuccessBeep(); // Play beep on successful return
+                    
+                    // Reload data
+                    setTimeout(() => {
+                        loadAllData();
+                        loadReturnBoxes();
+                    }, 500);
+                } else {
+                    showToast('Failed to return box: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error returning box:', error);
+                showToast('Error returning box: ' + error.message, 'danger');
+            });
+        }
+        
+        // Box Registration QR Scanner Functions
+        function toggleBoxRegistrationQr() {
+            if (boxRegQrScannerActive) {
+                stopBoxRegistrationQr();
+            } else {
+                startBoxRegistrationQr();
+            }
+        }
+        
+        function startBoxRegistrationQr() {
+            if (boxRegQrScannerActive) return;
+            
+            document.getElementById('boxQrScannerContainer').style.display = 'block';
+            document.getElementById('boxQrBtnText').textContent = 'Close Scanner';
+            
+            if (!boxRegQrScanner) {
+                boxRegQrScanner = new Html5Qrcode("boxQrReader");
+            }
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            boxRegQrScanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    console.log('Box QR scanned:', decodedText);
+                    // Parse the box number from QR code
+                    const boxNumber = decodedText.trim();
+                    
+                    // Extract the numeric suffix (e.g., "001" from "GS-B - 001")
+                    const match = boxNumber.match(/GS-B\s*-\s*(\d{3})/i);
+                    if (match) {
+                        document.getElementById('boxNumberSuffix').value = match[1];
+                        updateBoxPreview();
+                        showToast('Box number scanned: ' + boxNumber, 'success');
+                        playSuccessBeep(); // Play beep on successful box registration scan
+                        stopBoxRegistrationQr();
+                    } else {
+                        showToast('Invalid box QR code format', 'warning');
+                    }
+                },
+                (error) => {
+                    // Ignore scan errors (happens continuously)
+                }
+            ).then(() => {
+                boxRegQrScannerActive = true;
+                console.log('Box registration QR scanner started');
+            }).catch(err => {
+                console.error('Failed to start box scanner:', err);
+                showToast('Failed to start camera', 'danger');
+            });
+        }
+        
+        function stopBoxRegistrationQr() {
+            if (!boxRegQrScannerActive || !boxRegQrScanner) return;
+            
+            boxRegQrScanner.stop().then(() => {
+                boxRegQrScannerActive = false;
+                document.getElementById('boxQrScannerContainer').style.display = 'none';
+                document.getElementById('boxQrBtnText').textContent = 'Scan QR Code';
+                console.log('Box registration QR scanner stopped');
+            }).catch(err => {
+                console.error('Error stopping box scanner:', err);
+            });
+        }
+
+        function processBatchReturn() {
+            if (selectedReturnBoxes.size === 0) {
+                showToast('Please select at least one box', 'warning');
+                return;
+            }
+            
+            const condition = currentReturnType === 'available' ? 'available' : 'needs_repair';
+            const promises = Array.from(selectedReturnBoxes).map(boxNumber => {
+                return fetch(`${API_BASE_URL}/api/return/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        box_number: boxNumber,
+                        condition: condition
+                    })
+                }).then(r => r.json());
+            });
+            
+            Promise.all(promises)
+                .then(results => {
+                    const successCount = results.filter(r => r.success).length;
+                    const errorCount = results.filter(r => !r.success).length;
+                    
+                    if (errorCount === 0) {
+                        showToast(`Successfully returned ${successCount} boxes`, 'success');
+                    } else {
+                        showToast(`Returned ${successCount} boxes, ${errorCount} failed`, 'warning');
+                    }
+                    
+                    // Clear selection and reload
+                    selectedReturnBoxes.clear();
+                    setTimeout(() => {
+                        loadAllData();
+                        loadReturnBoxes();
+                    }, 500);
+                })
+                .catch(error => {
+                    console.error('Error in batch return:', error);
+                    showToast('Error processing batch return', 'danger');
+                });
+        }
+
+        // Box Management Functions
+        function showAddBoxModal() {
+            // Reset modal
+            selectBoxType('B');
+            document.getElementById('boxNumberSuffix').value = '';
+            updateBoxPreview();
+            
+            const modal = new bootstrap.Modal(document.getElementById('addBoxModal'));
+            modal.show();
+        }
+
+        function selectBoxType(type) {
+            document.getElementById('boxTypeDisplay').textContent = type;
+            updateBoxPreview();
+            
+            // Update button styles
+            document.getElementById('boxTypeB').classList.toggle('active', type === 'B');
+        }
+
+        function updateBoxPreview() {
+            const type = document.getElementById('boxTypeDisplay').textContent;
+            const suffix = document.getElementById('boxNumberSuffix').value.trim() || '001';
+            document.getElementById('boxPreview').textContent = `GS-${type} - ${suffix.padStart(3, '0')}`;
+        }
+
+        function saveNewBox() {
+            const type = document.getElementById('boxTypeDisplay').textContent;
+            const suffix = document.getElementById('boxNumberSuffix').value.trim();
+            
+            if (!suffix) {
+                showToast('Please enter a box number suffix', 'warning');
+                return;
+            }
+            
+            const boxNumber = `GS-${type} - ${suffix.padStart(3, '0')}`;
+            
+            fetch(`${API_BASE_URL}/api/boxes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    box_number: boxNumber,
+                    box_type: type,
+                    status: 'available'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || `Server error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast(`Box ${boxNumber} added successfully!`, 'success');
+                    
+                    // Close modal and reload data
+                    bootstrap.Modal.getInstance(document.getElementById('addBoxModal')).hide();
+                    
+                    // Reload all data
+                    loadAllData();
+                    
+                    // Explicitly refresh boxes table if on boxes tab
+                    setTimeout(() => {
+                        updateBoxesTable();
+                    }, 600);
+                } else {
+                    showToast('Failed to add box: ' + (data.error || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding box:', error);
+                showToast(error.message || 'Error adding box', 'danger');
+            });
+        }
+
+        function viewBoxDetails(boxNumber) {
+            fetch(`${API_BASE_URL}/api/boxes/${encodeURIComponent(boxNumber)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Box not found');
+                    return response.json();
+                })
+                .then(box => {
+                    // API returns box object directly
+                    if (box && box.box_number) {
+                        // Update modal content
+                        document.getElementById('detailBoxNumber').textContent = box.box_number;
+                        document.getElementById('detailBoxType').textContent = box.box_type;
+                        document.getElementById('detailBoxStatus').innerHTML = 
+                            `<span class="badge status-${box.status}">${box.status}</span>`;
+                        document.getElementById('detailBoxNotes').textContent = box.notes || 'None';
+                        document.getElementById('detailLastUpdated').textContent = 
+                            formatDate(box.last_updated || box.created_at);
+                        
+                        // Set current status in select
+                        document.getElementById('updateStatusSelect').value = box.status;
+                        
+                        // Show modal
+                        const modal = new bootstrap.Modal(document.getElementById('boxDetailsModal'));
+                        modal.show();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching box details:', error);
+                    showToast('Error loading box details', 'danger');
+                });
+        }
+
+        function updateBoxStatusFromModal() {
+            const boxNumber = document.getElementById('detailBoxNumber').textContent;
+            const newStatus = document.getElementById('updateStatusSelect').value;
+            
+            fetch(`${API_BASE_URL}/api/boxes/${encodeURIComponent(boxNumber)}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Box ${boxNumber} status updated to ${newStatus}`, 'success');
+                    
+                    // Close modal and reload data
+                    bootstrap.Modal.getInstance(document.getElementById('boxDetailsModal')).hide();
+                    setTimeout(() => {
+                        loadAllData();
+                    }, 500);
+                } else {
+                    showToast('Failed to update box status: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating box status:', error);
+                showToast('Error updating box status: ' + error.message, 'danger');
+            });
+        }
+
+        // Rider Management Functions
+        function showAddRiderModal() {
+            document.getElementById('newRiderId').value = '';
+            document.getElementById('newRiderName').value = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('addRiderModal'));
+            modal.show();
+        }
+
+        function saveNewRider() {
+            const riderId = document.getElementById('newRiderId').value.trim();
+            const name = document.getElementById('newRiderName').value.trim();
+            
+            if (!name) {
+                showToast('Please enter rider name', 'warning');
+                return;
+            }
+            
+            fetch(`${API_BASE_URL}/api/riders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    rider_id: riderId || undefined, // Send undefined if empty, backend will auto-generate
+                    name: name
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || `Server error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast(`Rider ${name} added successfully!`, 'success');
+                    
+                    // Close modal and reload data
+                    bootstrap.Modal.getInstance(document.getElementById('addRiderModal')).hide();
+                    
+                    // Reload all data
+                    loadAllData();
+                    
+                    // Explicitly refresh riders grid if on riders tab
+                    setTimeout(() => {
+                        updateRidersGrid();
+                        updateRiderSelect(); // Also update the rider dropdown
+                    }, 600);
+                } else {
+                    showToast('Failed to add rider: ' + (data.error || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding rider:', error);
+                showToast(error.message || 'Error adding rider', 'danger');
+            });
+        }
+
+        // Trip Management Functions
+        function loadTrips() {
+            fetch(`${API_BASE_URL}/api/trips`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentTrips = data.trips;
+                        updateTripsTable();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading trips:', error);
+                    showToast('Failed to load trips', 'danger');
+                });
+        }
+
+        async function updateTripsTable() {
+            const tbody = document.getElementById('tripsTableBody');
+            tbody.innerHTML = '';
+            
+            const statusFilter = document.getElementById('tripStatusFilter').value;
+            const searchTerm = document.getElementById('tripSearch').value.toLowerCase();
+            
+            let filteredTrips = currentTrips;
+            
+            // Apply filters
+            if (statusFilter !== 'all') {
+                filteredTrips = filteredTrips.filter(trip => trip.status === statusFilter);
+            }
+            
+            if (searchTerm) {
+                filteredTrips = filteredTrips.filter(trip => 
+                    trip.trip_id.toLowerCase().includes(searchTerm) ||
+                    trip.rider_name.toLowerCase().includes(searchTerm) ||
+                    trip.boxes.some(box => box.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            if (filteredTrips.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-3"></i>
+                            <p>No trips found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Get box statuses for all trips
+            for (const trip of filteredTrips) {
+                const boxStatuses = await getTripBoxStatuses(trip.boxes);
+                const returnedBoxes = boxStatuses.filter(b => b.status === 'available' || b.status === 'needs_repair');
+                const unreturned = boxStatuses.filter(b => b.status === 'in_transit');
+                
+                const row = document.createElement('tr');
+                const detailRowId = `trip-detail-${trip.id || trip.trip_id}`;
+                
+                row.innerHTML = `
+                    <td>
+                        <button class="btn btn-sm btn-link p-0" onclick="toggleTripDetails('${detailRowId}')">
+                            <i class="fas fa-chevron-right" id="icon-${detailRowId}"></i>
+                        </button>
+                        ${trip.trip_id}
+                    </td>
+                    <td>${trip.rider_name}<br><small class="text-muted">${trip.rider_id}</small></td>
+                    <td><span class="badge bg-primary">${trip.boxes.length} total</span></td>
+                    <td>${formatDate(trip.departure_time)}</td>
+                    <td>
+                        <span class="badge bg-success">${returnedBoxes.length} returned</span>
+                        ${unreturned.length > 0 ? `<span class="badge bg-warning ms-1">${unreturned.length} out</span>` : ''}
+                    </td>
+                    <td><span class="badge ${unreturned.length === 0 ? 'bg-success' : 'bg-warning'}">${unreturned.length === 0 ? 'returned' : 'departed'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTrip('${trip.id || trip.trip_id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                
+                // Add detail row (hidden by default)
+                const detailRow = document.createElement('tr');
+                detailRow.id = detailRowId;
+                detailRow.style.display = 'none';
+                detailRow.innerHTML = `
+                    <td colspan="7" class="bg-light">
+                        <div class="p-3">
+                            <strong>Box Details:</strong>
+                            <div class="row mt-2">
+                                ${returnedBoxes.length > 0 ? `
+                                    <div class="col-md-6">
+                                        <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Returned Boxes (${returnedBoxes.length})</h6>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            ${returnedBoxes.map(b => `<span class="badge bg-success">${b.box_number}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                ${unreturned.length > 0 ? `
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning"><i class="fas fa-exclamation-circle me-2"></i>Unreturned Boxes (${unreturned.length})</h6>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            ${unreturned.map(b => `<span class="badge bg-warning">${b.box_number}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            ${trip.destination ? `<div class="mt-2"><strong>Destination:</strong> ${trip.destination}</div>` : ''}
+                            ${trip.notes ? `<div class="mt-1"><strong>Notes:</strong> ${trip.notes}</div>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(detailRow);
+            }
+        }
+        
+        async function getTripBoxStatuses(boxNumbers) {
+            const statuses = [];
+            for (const boxNumber of boxNumbers) {
+                const box = currentBoxes.find(b => b.box_number === boxNumber);
+                if (box) {
+                    statuses.push(box);
+                } else {
+                    // If not in cache, fetch from server
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/api/boxes/${encodeURIComponent(boxNumber)}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.box) {
+                                statuses.push(data.box);
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching box ${boxNumber}:`, error);
+                        statuses.push({ box_number: boxNumber, status: 'unknown' });
+                    }
+                }
+            }
+            return statuses;
+        }
+        
+        function toggleTripDetails(detailRowId) {
+            const detailRow = document.getElementById(detailRowId);
+            const icon = document.getElementById(`icon-${detailRowId}`);
+            
+            if (detailRow.style.display === 'none') {
+                detailRow.style.display = 'table-row';
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                detailRow.style.display = 'none';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            }
+        }
+
+        function searchTrips() {
+            updateTripsTable();
+        }
+
+        function markTripReturned(tripId) {
+            if (!confirm('Mark this trip as returned?')) return;
+            
+            fetch(`${API_BASE_URL}/api/trips/${tripId}/return`, {
+                method: 'PUT'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Trip marked as returned', 'success');
+                    setTimeout(() => {
+                        loadAllData();
+                        loadTrips();
+                    }, 500);
+                } else {
+                    showToast('Failed to mark trip as returned: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error marking trip returned:', error);
+                showToast('Error marking trip returned: ' + error.message, 'danger');
+            });
+        }
+
+        function deleteTrip(tripId) {
+            if (!confirm('Are you sure you want to delete this trip?')) return;
+            
+            fetch(`${API_BASE_URL}/api/trips/${tripId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Trip deleted successfully', 'success');
+                    setTimeout(() => {
+                        loadAllData();
+                        loadTrips();
+                    }, 500);
+                } else {
+                    showToast('Failed to delete trip: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting trip:', error);
+                showToast('Error deleting trip: ' + error.message, 'danger');
+            });
+        }
+
+        function refreshTrips() {
+            loadTrips();
+            showToast('Trips refreshed', 'info');
+        }
+
+        // Analytics Functions
+        function loadAnalytics() {
+            // Load status distribution
+            fetch(`${API_BASE_URL}/api/stats/status-distribution`)
+                .then(response => response.json())
+                .then(data => {
+                    renderStatusChart(data);
+                })
+                .catch(error => {
+                    console.error('Error loading analytics:', error);
+                });
+        }
+
+        function renderStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.statusChartInstance) {
+                window.statusChartInstance.destroy();
+            }
+            
+            const labels = Object.keys(data).filter(key => data[key] > 0);
+            const values = labels.map(key => data[key]);
+            
+            window.statusChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1).replace('_', ' ')),
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            '#2ecc71', // available - green
+                            '#f39c12', // in_transit - orange
+                            '#3498db', // delivered - blue
+                            '#9b59b6', // returned - purple
+                            '#e74c3c', // lost - red
+                            '#34495e'  // damaged - dark
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Box Status Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============= REPORTS FUNCTIONS =============
+        async function refreshReports() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/reports/overdue`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayOverdueTrips(result.data.overdueTrips);
+                    displayActiveTrips(result.data.activeTrips);
+                    
+                    // Show summary toast
+                    showToast(
+                        `Report loaded: ${result.data.summary.totalOverdue} overdue, ${result.data.summary.totalActive} active trips`,
+                        'success'
+                    );
+                } else {
+                    showToast('Failed to load reports', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                showToast('Error loading reports', 'error');
+            }
+        }
+
+        function displayOverdueTrips(trips) {
+            const tbody = document.getElementById('overdueTripsBody');
+            
+            if (trips.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-success py-4">
+                            <i class="fas fa-check-circle me-2"></i>No overdue trips! All deliveries are on time.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = trips.map(trip => {
+                const boxList = trip.boxNumbers && trip.boxNumbers.length > 0 
+                    ? trip.boxNumbers.join(', ') 
+                    : 'No boxes';
+                
+                return `
+                    <tr class="table-danger">
+                        <td><strong>${trip.trip_id}</strong></td>
+                        <td>${trip.rider_name}</td>
+                        <td><span class="badge bg-secondary">${trip.rider_id}</span></td>
+                        <td>
+                            <div class="text-nowrap">
+                                <strong>${trip.boxCount} boxes:</strong><br>
+                                <small>${boxList}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <small>${trip.departureTimeFormatted}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-danger">
+                                <i class="fas fa-exclamation-triangle me-1"></i>${trip.hoursOut} hours
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning">Active</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function displayActiveTrips(trips) {
+            const tbody = document.getElementById('activeTripsBody');
+            
+            if (trips.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-info-circle me-2"></i>No active trips at the moment.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = trips.map(trip => {
+                const isOverdue = parseFloat(trip.hoursOut) > 24;
+                const rowClass = isOverdue ? 'table-warning' : '';
+                const boxList = trip.boxNumbers && trip.boxNumbers.length > 0 
+                    ? trip.boxNumbers.join(', ') 
+                    : 'No boxes';
+                
+                return `
+                    <tr class="${rowClass}">
+                        <td><strong>${trip.trip_id}</strong></td>
+                        <td>${trip.rider_name}</td>
+                        <td><span class="badge bg-secondary">${trip.rider_id}</span></td>
+                        <td>
+                            <div class="text-nowrap">
+                                <strong>${trip.boxCount} boxes:</strong><br>
+                                <small>${boxList}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <small>${trip.departureTimeFormatted}</small>
+                        </td>
+                        <td>
+                            <span class="badge ${isOverdue ? 'bg-danger' : 'bg-success'}">
+                                <i class="fas fa-clock me-1"></i>${trip.hoursOut} hours
+                            </span>
+                        </td>
+                        <td>
+                            <small>${trip.destination || 'Not specified'}</small>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Utility Functions
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function switchToTab(tabName) {
+            const tab = document.querySelector(`#mainTabs button[data-bs-target="#${tabName}"]`);
+            if (tab) {
+                bootstrap.Tab.getInstance(tab).show();
+            }
+        }
+
+        function refreshAllData() {
+            // First fix trip statuses
+            fetch(`${API_BASE_URL}/api/trips/fix-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.fixed_count > 0) {
+                    console.log(`✅ Fixed ${data.fixed_count} trip statuses`);
+                }
+            })
+            .catch(error => {
+                console.error('Error fixing trips:', error);
+            })
+            .finally(() => {
+                // Then reload all data
+                loadAllData();
+                // Explicitly update the visible displays
+                setTimeout(() => {
+                    updateBoxesTable();
+                    updateRidersGrid();
+                    updateRiderSelect();
+                }, 500);
+                showToast('All data refreshed', 'success');
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            // Create toast container if it doesn't exist
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(container);
+            }
+            
+            // Create toast
+            const toastId = 'toast-' + Date.now();
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0`;
+            toast.id = toastId;
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Show toast
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 3000
+            });
+            bsToast.show();
+            
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+
+        // ============= TAB SWITCHING EVENT LISTENERS =============
+        // Listen for Reports tab activation
+        document.addEventListener('DOMContentLoaded', function() {
+            const reportsTab = document.getElementById('reports-tab');
+            if (reportsTab) {
+                reportsTab.addEventListener('shown.bs.tab', function (event) {
+                    console.log('📊 Reports tab opened - loading data...');
+                    refreshReports();
+                });
+            }
+        });
+        
+        // Register Service Worker for PWA support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => console.log('✓ PWA enabled:', registration.scope))
+                    .catch(err => console.log('Service worker registration failed:', err));
+            });
+        }
+        
+        // Prompt to install PWA on mobile
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('💡 App can be installed');
+        });
+    </script>
+</body>
+</html>

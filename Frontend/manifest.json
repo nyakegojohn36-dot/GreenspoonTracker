@@ -1,0 +1,23 @@
+{
+  "name": "Greenspoon Box Tracker",
+  "short_name": "Greenspoon",
+  "description": "Box tracking system for deliveries",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6b35",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/coolerbox.jpg",
+      "sizes": "160x160",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "permissions": [
+    "camera"
+  ],
+  "categories": ["business", "productivity"],
+  "scope": "/"
+}
