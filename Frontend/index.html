@@ -539,12 +539,26 @@
             }
             
             .navbar-brand {
-                font-size: 1.2rem;
+                font-size: 1rem;
+                flex: 1;
+            }
+            
+            .navbar-brand span {
+                white-space: nowrap;
             }
             
             .navbar-brand img {
-                width: 35px;
-                height: 35px;
+                width: 30px;
+                height: 30px;
+                margin-right: 5px;
+            }
+            
+            .navbar-brand .badge {
+                display: none; /* Hide version badge on mobile to save space */
+            }
+            
+            #currentDateTime {
+                font-size: 0.75rem;
             }
             
             .nav-tabs {
