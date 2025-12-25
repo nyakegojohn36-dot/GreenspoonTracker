@@ -1457,10 +1457,18 @@
         const isHTTPS = window.location.protocol === 'https:';
         const hostname = window.location.hostname;
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+        const isRailway = hostname.includes('railway.app');
         
-        const API_BASE_URL = isLocal
-            ? (isHTTPS ? 'https://localhost:3443' : 'http://localhost:3000')
-            : (isHTTPS ? `https://${hostname}:3443` : `http://${hostname}:3000`);
+        // Railway and other cloud platforms use standard ports (443 for HTTPS, 80 for HTTP)
+        // Only add custom ports for localhost
+        let API_BASE_URL;
+        if (isLocal) {
+            API_BASE_URL = isHTTPS ? 'https://localhost:3443' : 'http://localhost:3000';
+        } else if (isRailway) {
+            API_BASE_URL = `https://${hostname}`; // Railway always uses HTTPS
+        } else {
+            API_BASE_URL = isHTTPS ? `https://${hostname}` : `http://${hostname}`;
+        }
         
         console.log('🌐 API URL:', API_BASE_URL);
         console.log('🔒 Protocol:', window.location.protocol);
