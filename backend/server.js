@@ -11,9 +11,27 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from frontend
-const frontendPath = path.join(__dirname, '..', 'frontend');
-if (fs.existsSync(frontendPath)) {
+// Try multiple possible locations for frontend files
+const possibleFrontendPaths = [
+    path.join(__dirname, '..', 'Frontend'),  // Capital F for local dev
+    path.join(__dirname, '..', 'frontend'),  // lowercase for Railway copy
+    path.join(__dirname, 'Frontend'),         // In backend folder
+    path.join(__dirname, 'frontend')          // In backend folder lowercase
+];
+
+let frontendPath = null;
+for (const p of possibleFrontendPaths) {
+    if (fs.existsSync(p)) {
+        frontendPath = p;
+        console.log(`✅ Found frontend at: ${p}`);
+        break;
+    }
+}
+
+if (frontendPath) {
     app.use(express.static(frontendPath));
+} else {
+    console.log('⚠️  Frontend folder not found. Tried:', possibleFrontendPaths);
 }
 
 // Database setup - use writable location
