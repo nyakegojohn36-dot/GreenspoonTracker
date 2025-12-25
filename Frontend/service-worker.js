@@ -1,4 +1,4 @@
-const CACHE_NAME = 'greenspoon-v1.3';
+const CACHE_NAME = 'greenspoon-v1.4';
 const urlsToCache = [
   '/coolerbox.jpg',
   '/logo.png'
@@ -8,7 +8,17 @@ const urlsToCache = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => {
+        // Cache files individually with error handling
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(url).catch(err => {
+              console.log('Failed to cache:', url, err);
+              return Promise.resolve(); // Don't fail install if one file fails
+            })
+          )
+        );
+      })
   );
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
