@@ -45,6 +45,12 @@
             box-sizing: border-box;
         }
         
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+            position: relative;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e3f2fd 100%);
@@ -52,6 +58,14 @@
             padding-bottom: 30px;
             color: #2c3e50;
             line-height: 1.6;
+            width: 100vw;
+        }
+        
+        .container, .container-fluid {
+            max-width: 100%;
+            overflow-x: hidden;
+            padding-left: 15px;
+            padding-right: 15px;
         }
         
         /* Enhanced Navbar */
@@ -515,24 +529,83 @@
         
         /* Enhanced Responsive Design */
         @media (max-width: 768px) {
+            body {
+                padding-bottom: 20px;
+            }
+            
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .navbar-brand img {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            
+            .nav-tabs::-webkit-scrollbar {
+                display: none;
+            }
+            
             .nav-tabs .nav-link {
                 padding: 12px 18px;
                 font-size: 0.85rem;
                 margin-right: 4px;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
             
             .tab-content {
-                padding: 20px;
+                padding: 15px;
                 border-radius: 0 0 20px 20px;
             }
             
+            .dashboard-card {
+                margin-bottom: 15px;
+            }
+            
             .scanner-container {
-                padding: 20px;
+                padding: 15px;
+            }
+            
+            #qr-reader, #return-qr-reader, #box-qr-reader {
+                width: 100% !important;
+                max-width: 100% !important;
             }
             
             .btn-greenspoon, .btn-outline-greenspoon {
                 padding: 10px 20px;
                 font-size: 0.9rem;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            table {
+                min-width: 600px;
+            }
+            
+            .form-control, .form-select {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .modal-dialog {
+                margin: 10px;
             }
         }
         
