@@ -876,16 +876,7 @@ app.get('*', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 const HTTPS_PORT = 3443;
-
-// Generate self-signed certificate for local HTTPS
-const selfsigned = require('selfsigned');
-const attrs = [{ name: 'commonName', value: 'localhost' }];
-const pems = selfsigned.generate(attrs, { days: 365 });
-
-const httpsOptions = {
-    key: pems.private,
-    cert: pems.cert
-};
+const isDevelopment = !process.env.RAILWAY_ENVIRONMENT && !process.env.NODE_ENV === 'production';
 
 // Start HTTP server
 http.createServer(app).listen(PORT, '0.0.0.0', () => {
@@ -893,7 +884,7 @@ http.createServer(app).listen(PORT, '0.0.0.0', () => {
     console.log('🚀 SERVER STARTED SUCCESSFULLY');
     console.log('='.repeat(50));
     console.log(`✅ HTTP Port: ${PORT}`);
-    console.log(`✅ HTTPS Port: ${HTTPS_PORT} (for mobile camera access)`);
+    console.log(`✅ Environment: ${process.env.RAILWAY_ENVIRONMENT || 'development'}`);
     console.log(`✅ Health: http://localhost:${PORT}/api/health`);
     console.log(`✅ Boxes: http://localhost:${PORT}/api/boxes`);
     console.log(`✅ Riders: http://localhost:${PORT}/api/riders`);
@@ -905,12 +896,28 @@ http.createServer(app).listen(PORT, '0.0.0.0', () => {
     console.log('='.repeat(50) + '\n');
 });
 
-// Start HTTPS server for mobile camera access
-https.createServer(httpsOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
-    console.log(`🔒 HTTPS server running on port ${HTTPS_PORT}`);
-    console.log(`📱 Mobile access: https://YOUR_IP:${HTTPS_PORT}`);
-    console.log(`⚠️  You'll need to accept the self-signed certificate warning\n`);
-});
+// Start HTTPS server only in development (Railway provides HTTPS automatically)
+if (isDevelopment) {
+    try {
+        // Generate self-signed certificate for local HTTPS
+        const selfsigned = require('selfsigned');
+        const attrs = [{ name: 'commonName', value: 'localhost' }];
+        const pems = selfsigned.generate(attrs, { days: 365 });
+
+        const httpsOptions = {
+            key: pems.private,
+            cert: pems.cert
+        };
+
+        https.createServer(httpsOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
+            console.log(`🔒 HTTPS server running on port ${HTTPS_PORT}`);
+            console.log(`📱 Mobile access: https://YOUR_IP:${HTTPS_PORT}`);
+            console.log(`⚠️  You'll need to accept the self-signed certificate warning\n`);
+        });
+    } catch (error) {
+        console.log('⚠️  HTTPS server skipped (selfsigned module not available)');
+    }
+}
 
 // Handle shutdown
 process.on('SIGINT', () => {
