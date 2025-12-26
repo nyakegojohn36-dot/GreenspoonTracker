@@ -2199,10 +2199,15 @@
                 qrScanner = new Html5Qrcode("qrReader");
             }
             
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
             
+            // Try back camera first (environment), then front camera if fails
             qrScanner.start(
-                { facingMode: "environment" },
+                { facingMode: { ideal: "environment" } },
                 config,
                 (decodedText) => {
                     // On successful scan
@@ -2216,9 +2221,43 @@
                 }
             ).then(() => {
                 qrScannerActive = true;
+                console.log('✅ Camera started successfully');
             }).catch((err) => {
-                console.error('QR Scanner error:', err);
-                showToast('Camera access denied or not available', 'warning');
+                console.error('❌ Camera error:', err);
+                
+                // Provide specific error messages
+                let errorMsg = 'Camera not accessible. ';
+                if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
+                    errorMsg = '⚠️ Camera permission denied. Please allow camera access in your browser settings.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg = '⚠️ No camera found on this device.';
+                } else if (err.name === 'NotReadableError' || err.message.includes('not readable')) {
+                    errorMsg = '⚠️ Camera is being used by another app. Please close other apps using the camera.';
+                } else if (err.name === 'OverconstrainedError') {
+                    // Try with front camera
+                    console.log('Trying front camera...');
+                    qrScanner.start(
+                        { facingMode: "user" },
+                        config,
+                        (decodedText) => {
+                            document.getElementById('tripBoxInput').value = decodedText;
+                            addBoxToTrip();
+                            if (navigator.vibrate) navigator.vibrate(200);
+                        },
+                        (errorMessage) => {}
+                    ).then(() => {
+                        qrScannerActive = true;
+                        showToast('✅ Front camera activated', 'success');
+                    }).catch((frontErr) => {
+                        console.error('Front camera also failed:', frontErr);
+                        showToast('⚠️ Cannot access any camera. Please check permissions.', 'danger');
+                    });
+                    return;
+                }
+                
+                showToast(errorMsg, 'danger');
+                document.getElementById('qrScannerContainer').style.display = 'none';
+                document.getElementById('toggleQrBtn').innerHTML = '<i class="fas fa-qrcode me-1"></i>Open QR Scanner';
             });
         }
         
@@ -2550,10 +2589,14 @@
                 returnQrScanner = new Html5Qrcode("returnQrReader");
             }
             
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
             
             returnQrScanner.start(
-                { facingMode: "environment" },
+                { facingMode: { ideal: "environment" } },
                 config,
                 (decodedText) => {
                     console.log('Return QR scanned:', decodedText);
@@ -2564,10 +2607,38 @@
                 }
             ).then(() => {
                 returnQrScannerActive = true;
-                console.log('Return QR scanner started');
+                console.log('✅ Return camera started successfully');
             }).catch(err => {
-                console.error('Failed to start return scanner:', err);
-                showToast('Failed to start camera', 'danger');
+                console.error('❌ Return camera error:', err);
+                
+                let errorMsg = 'Camera not accessible. ';
+                if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
+                    errorMsg = '⚠️ Camera permission denied. Please allow camera access.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg = '⚠️ No camera found.';
+                } else if (err.name === 'NotReadableError' || err.message.includes('not readable')) {
+                    errorMsg = '⚠️ Camera is being used by another app. Close other apps and try again.';
+                } else if (err.name === 'OverconstrainedError') {
+                    // Try front camera
+                    returnQrScanner.start(
+                        { facingMode: "user" },
+                        config,
+                        (decodedText) => {
+                            processReturnBox(decodedText);
+                        },
+                        (error) => {}
+                    ).then(() => {
+                        returnQrScannerActive = true;
+                        showToast('✅ Front camera activated', 'success');
+                    }).catch((frontErr) => {
+                        showToast('⚠️ Cannot access any camera.', 'danger');
+                    });
+                    return;
+                }
+                
+                showToast(errorMsg, 'danger');
+                document.getElementById('returnQrScannerContainer').style.display = 'none';
+                document.getElementById('toggleReturnQrBtn').innerHTML = '<i class="fas fa-qrcode me-1"></i>Open QR Scanner';
             });
         }
         
@@ -2642,10 +2713,14 @@
                 boxRegQrScanner = new Html5Qrcode("boxQrReader");
             }
             
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
             
             boxRegQrScanner.start(
-                { facingMode: "environment" },
+                { facingMode: { ideal: "environment" } },
                 config,
                 (decodedText) => {
                     console.log('Box QR scanned:', decodedText);
@@ -2669,10 +2744,48 @@
                 }
             ).then(() => {
                 boxRegQrScannerActive = true;
-                console.log('Box registration QR scanner started');
+                console.log('✅ Box registration camera started successfully');
             }).catch(err => {
-                console.error('Failed to start box scanner:', err);
-                showToast('Failed to start camera', 'danger');
+                console.error('❌ Box registration camera error:', err);
+                
+                let errorMsg = 'Camera not accessible. ';
+                if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
+                    errorMsg = '⚠️ Camera permission denied. Please allow camera access.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg = '⚠️ No camera found.';
+                } else if (err.name === 'NotReadableError' || err.message.includes('not readable')) {
+                    errorMsg = '⚠️ Camera is being used by another app. Close other apps and try again.';
+                } else if (err.name === 'OverconstrainedError') {
+                    // Try front camera
+                    boxRegQrScanner.start(
+                        { facingMode: "user" },
+                        config,
+                        (decodedText) => {
+                            const boxNumber = decodedText.trim();
+                            const match = boxNumber.match(/GS-B\s*-\s*(\d{3})/i);
+                            if (match) {
+                                document.getElementById('boxNumberSuffix').value = match[1];
+                                updateBoxPreview();
+                                showToast('Box number scanned: ' + boxNumber, 'success');
+                                playSuccessBeep();
+                                stopBoxRegistrationQr();
+                            } else {
+                                showToast('Invalid box QR code format', 'warning');
+                            }
+                        },
+                        (error) => {}
+                    ).then(() => {
+                        boxRegQrScannerActive = true;
+                        showToast('✅ Front camera activated', 'success');
+                    }).catch((frontErr) => {
+                        showToast('⚠️ Cannot access any camera.', 'danger');
+                    });
+                    return;
+                }
+                
+                showToast(errorMsg, 'danger');
+                document.getElementById('boxQrScannerContainer').style.display = 'none';
+                document.getElementById('boxQrBtnText').textContent = 'Scan QR';
             });
         }
         
