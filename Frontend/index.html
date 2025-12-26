@@ -999,8 +999,15 @@
                                     <option value="RUNDA">RUNDA</option>
                                     <option value="KAREN">KAREN</option>
                                     <option value="KILIMANI">KILIMANI</option>
+                                    <option value="OTHER">Other (Specify below)</option>
                                 </select>
                                 <small class="text-muted">Required field</small>
+                            </div>
+                            
+                            <div class="mb-3" id="customDestinationDiv" style="display: none;">
+                                <label class="form-label">Custom Destination <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="customDestination" placeholder="Enter destination name">
+                                <small class="text-muted">Enter the destination not in the list above</small>
                             </div>
                             
                             <div class="mb-3">
@@ -1765,6 +1772,21 @@
                     selectRider(riderId);
                 }
             });
+            
+            // Destination select change - show/hide custom destination field
+            document.getElementById('tripDestination').addEventListener('change', function() {
+                const customDiv = document.getElementById('customDestinationDiv');
+                const customInput = document.getElementById('customDestination');
+                
+                if (this.value === 'OTHER') {
+                    customDiv.style.display = 'block';
+                    customInput.required = true;
+                } else {
+                    customDiv.style.display = 'none';
+                    customInput.required = false;
+                    customInput.value = '';
+                }
+            });
         }
 
         function testBackendConnection() {
@@ -2333,10 +2355,21 @@
             }
             
             const destination = document.getElementById('tripDestination').value.trim();
+            const customDestination = document.getElementById('customDestination').value.trim();
             const notes = document.getElementById('tripNotes').value.trim();
             
+            // Determine final destination
+            let finalDestination = destination;
+            if (destination === 'OTHER') {
+                if (!customDestination) {
+                    showToast('Please enter custom destination', 'warning');
+                    return;
+                }
+                finalDestination = customDestination.toUpperCase();
+            }
+            
             // Validate destination is selected
-            if (!destination) {
+            if (!finalDestination) {
                 showToast('Please select a destination', 'warning');
                 return;
             }
@@ -2345,7 +2378,7 @@
                 rider_id: selectedRider.rider_id,
                 rider_name: selectedRider.name,
                 boxes: tripBoxes,
-                destination: destination,
+                destination: finalDestination,
                 notes: notes
             };
             
@@ -2365,6 +2398,8 @@
                     clearSelectedRider();
                     clearTripBoxes();
                     document.getElementById('tripDestination').value = '';
+                    document.getElementById('customDestination').value = '';
+                    document.getElementById('customDestinationDiv').style.display = 'none';
                     document.getElementById('tripNotes').value = '';
                     
                     // Reload data
