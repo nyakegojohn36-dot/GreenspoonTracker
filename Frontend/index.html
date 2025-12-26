@@ -1604,13 +1604,44 @@
             }
         }
 
+        // Check for internet connection
+        function isOnline() {
+            return navigator.onLine;
+        }
+
+        function getErrorMessage(error) {
+            if (!isOnline()) {
+                return '⚠️ No internet connection. Please check your network.';
+            }
+            if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+                return '❌ Cannot connect to server. Please try again later.';
+            }
+            return `❌ Error: ${error.message}`;
+        }
+
+        // Show offline/online status
+        window.addEventListener('online', () => {
+            showToast('✅ Internet connection restored!', 'success');
+            console.log('📶 Back online');
+            loadAllData(); // Reload data when back online
+        });
+
+        window.addEventListener('offline', () => {
+            showToast('⚠️ No internet connection', 'warning');
+            console.log('📵 Offline mode');
+        });
+
         // Auto-refresh data every 10 seconds to sync with other devices
         let autoRefreshInterval;
         function startAutoRefresh() {
             // Refresh data every 10 seconds
             autoRefreshInterval = setInterval(() => {
-                console.log('🔄 Auto-refreshing data...');
-                loadAllData();
+                if (isOnline()) {
+                    console.log('🔄 Auto-refreshing data...');
+                    loadAllData();
+                } else {
+                    console.log('📵 Offline - skipping auto-refresh');
+                }
             }, 10000); // 10 seconds
         }
 
@@ -1744,7 +1775,7 @@
                 })
                 .catch(error => {
                     console.error('❌ Backend connection failed:', error);
-                    showToast('Backend connection failed. Please check if server is running.', 'danger');
+                    showToast(getErrorMessage(error), 'danger');
                 });
         }
 
@@ -1805,7 +1836,7 @@
             })
             .catch(error => {
                 console.error('❌ Error loading data:', error);
-                showToast('Failed to load data. Please try again.', 'danger');
+                showToast(getErrorMessage(error), 'danger');
             });
         }
 
