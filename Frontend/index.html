@@ -2191,6 +2191,24 @@
         function startQrScanner() {
             if (qrScannerActive) return;
             
+            // Request camera permission explicitly first
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then((stream) => {
+                    // Permission granted, stop the stream and start QR scanner
+                    stream.getTracks().forEach(track => track.stop());
+                    initializeQrScanner();
+                })
+                .catch((err) => {
+                    console.error('Permission request failed:', err);
+                    if (err.name === 'NotAllowedError') {
+                        showToast('⚠️ Camera permission denied. Please allow camera access in your browser settings and try again.', 'danger');
+                    } else {
+                        showToast('⚠️ Cannot access camera. Please check permissions.', 'danger');
+                    }
+                });
+        }
+        
+        function initializeQrScanner() {
             const qrReaderElement = document.getElementById('qrReader');
             document.getElementById('qrScannerContainer').style.display = 'block';
             document.getElementById('toggleQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
@@ -2582,6 +2600,24 @@
         function startReturnQrScanner() {
             if (returnQrScannerActive) return;
             
+            // Request camera permission explicitly first
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then((stream) => {
+                    // Permission granted, stop the stream and start QR scanner
+                    stream.getTracks().forEach(track => track.stop());
+                    initializeReturnQrScanner();
+                })
+                .catch((err) => {
+                    console.error('Return camera permission failed:', err);
+                    if (err.name === 'NotAllowedError') {
+                        showToast('⚠️ Camera permission denied. Please allow camera access and try again.', 'danger');
+                    } else {
+                        showToast('⚠️ Cannot access camera.', 'danger');
+                    }
+                });
+        }
+        
+        function initializeReturnQrScanner() {
             document.getElementById('returnQrScannerContainer').style.display = 'block';
             document.getElementById('toggleReturnQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
             
@@ -2706,6 +2742,24 @@
         function startBoxRegistrationQr() {
             if (boxRegQrScannerActive) return;
             
+            // Request camera permission explicitly first
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then((stream) => {
+                    // Permission granted, stop the stream and start QR scanner
+                    stream.getTracks().forEach(track => track.stop());
+                    initializeBoxRegQrScanner();
+                })
+                .catch((err) => {
+                    console.error('Box registration camera permission failed:', err);
+                    if (err.name === 'NotAllowedError') {
+                        showToast('⚠️ Camera permission denied. Please allow camera access and try again.', 'danger');
+                    } else {
+                        showToast('⚠️ Cannot access camera.', 'danger');
+                    }
+                });
+        }
+        
+        function initializeBoxRegQrScanner() {
             document.getElementById('boxQrScannerContainer').style.display = 'block';
             document.getElementById('boxQrBtnText').textContent = 'Close Scanner';
             
