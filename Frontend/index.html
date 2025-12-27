@@ -2213,7 +2213,7 @@
             
             // Try back camera first (environment), then front camera if fails
             qrScanner.start(
-                { facingMode: { ideal: "environment" } },
+                { facingMode: "environment" },  // Use string format, not object
                 config,
                 (decodedText) => {
                     // On successful scan
@@ -2237,11 +2237,12 @@
                 
                 // Provide specific error messages
                 let errorMsg = 'Camera not accessible. ';
-                if (err.name === 'NotAllowedError' || err.message.includes('Permission') || err.message.includes('not allowed')) {
+                const errMsg = err.message || '';  // Safety check
+                if (err.name === 'NotAllowedError' || errMsg.includes('Permission') || errMsg.includes('not allowed')) {
                     errorMsg = '⚠️ Please allow camera permission when prompted. If you blocked it, tap the lock icon in the address bar and enable camera access.';
                 } else if (err.name === 'NotFoundError') {
                     errorMsg = '⚠️ No camera found on this device.';
-                } else if (err.name === 'NotReadableError' || err.message.includes('not readable') || err.message.includes('Could not start')) {
+                } else if (err.name === 'NotReadableError' || errMsg.includes('not readable') || errMsg.includes('Could not start')) {
                     errorMsg = '⚠️ Camera is being used by another app. Please close WhatsApp, Instagram, Camera app, and other apps using the camera, then try again.';
                 } else if (err.name === 'OverconstrainedError') {
                     // Try with front camera
@@ -2611,7 +2612,7 @@
             };
             
             returnQrScanner.start(
-                { facingMode: { ideal: "environment" } },
+                { facingMode: "environment" },  // Use string format, not object
                 config,
                 (decodedText) => {
                     console.log('Return QR scanned:', decodedText);
@@ -2743,7 +2744,7 @@
             };
             
             boxRegQrScanner.start(
-                { facingMode: { ideal: "environment" } },
+                { facingMode: "environment" },  // Use string format, not object
                 config,
                 (decodedText) => {
                     console.log('Box QR scanned:', decodedText);
