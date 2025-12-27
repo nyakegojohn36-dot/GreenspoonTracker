@@ -2190,22 +2190,7 @@
         
         function startQrScanner() {
             if (qrScannerActive) return;
-            
-            // Request camera permission explicitly first
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then((stream) => {
-                    // Permission granted, stop the stream and start QR scanner
-                    stream.getTracks().forEach(track => track.stop());
-                    initializeQrScanner();
-                })
-                .catch((err) => {
-                    console.error('Permission request failed:', err);
-                    if (err.name === 'NotAllowedError') {
-                        showToast('⚠️ Camera permission denied. Please allow camera access in your browser settings and try again.', 'danger');
-                    } else {
-                        showToast('⚠️ Cannot access camera. Please check permissions.', 'danger');
-                    }
-                });
+            initializeQrScanner();
         }
         
         function initializeQrScanner() {
@@ -2245,12 +2230,12 @@
                 
                 // Provide specific error messages
                 let errorMsg = 'Camera not accessible. ';
-                if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
-                    errorMsg = '⚠️ Camera permission denied. Please allow camera access in your browser settings.';
+                if (err.name === 'NotAllowedError' || err.message.includes('Permission') || err.message.includes('not allowed')) {
+                    errorMsg = '⚠️ Camera is being used by another app. Please close all other apps/tabs using the camera (like WhatsApp, Instagram, Camera app) and try again.';
                 } else if (err.name === 'NotFoundError') {
                     errorMsg = '⚠️ No camera found on this device.';
-                } else if (err.name === 'NotReadableError' || err.message.includes('not readable')) {
-                    errorMsg = '⚠️ Camera is being used by another app. Please close other apps using the camera.';
+                } else if (err.name === 'NotReadableError' || err.message.includes('not readable') || err.message.includes('Could not start')) {
+                    errorMsg = '⚠️ Camera is being used by another app. Please close other apps using the camera and try again.';
                 } else if (err.name === 'OverconstrainedError') {
                     // Try with front camera
                     console.log('Trying front camera...');
@@ -2599,22 +2584,7 @@
         
         function startReturnQrScanner() {
             if (returnQrScannerActive) return;
-            
-            // Request camera permission explicitly first
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then((stream) => {
-                    // Permission granted, stop the stream and start QR scanner
-                    stream.getTracks().forEach(track => track.stop());
-                    initializeReturnQrScanner();
-                })
-                .catch((err) => {
-                    console.error('Return camera permission failed:', err);
-                    if (err.name === 'NotAllowedError') {
-                        showToast('⚠️ Camera permission denied. Please allow camera access and try again.', 'danger');
-                    } else {
-                        showToast('⚠️ Cannot access camera.', 'danger');
-                    }
-                });
+            initializeReturnQrScanner();
         }
         
         function initializeReturnQrScanner() {
@@ -2741,22 +2711,7 @@
         
         function startBoxRegistrationQr() {
             if (boxRegQrScannerActive) return;
-            
-            // Request camera permission explicitly first
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then((stream) => {
-                    // Permission granted, stop the stream and start QR scanner
-                    stream.getTracks().forEach(track => track.stop());
-                    initializeBoxRegQrScanner();
-                })
-                .catch((err) => {
-                    console.error('Box registration camera permission failed:', err);
-                    if (err.name === 'NotAllowedError') {
-                        showToast('⚠️ Camera permission denied. Please allow camera access and try again.', 'danger');
-                    } else {
-                        showToast('⚠️ Cannot access camera.', 'danger');
-                    }
-                });
+            initializeBoxRegQrScanner();
         }
         
         function initializeBoxRegQrScanner() {
@@ -2803,11 +2758,11 @@
                 console.error('❌ Box registration camera error:', err);
                 
                 let errorMsg = 'Camera not accessible. ';
-                if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
-                    errorMsg = '⚠️ Camera permission denied. Please allow camera access.';
+                if (err.name === 'NotAllowedError' || err.message.includes('Permission') || err.message.includes('not allowed')) {
+                    errorMsg = '⚠️ Camera is being used by another app. Please close all other apps/tabs using the camera (WhatsApp, Instagram, Camera app) and try again.';
                 } else if (err.name === 'NotFoundError') {
                     errorMsg = '⚠️ No camera found.';
-                } else if (err.name === 'NotReadableError' || err.message.includes('not readable')) {
+                } else if (err.name === 'NotReadableError' || err.message.includes('not readable') || err.message.includes('Could not start')) {
                     errorMsg = '⚠️ Camera is being used by another app. Close other apps and try again.';
                 } else if (err.name === 'OverconstrainedError') {
                     // Try front camera
