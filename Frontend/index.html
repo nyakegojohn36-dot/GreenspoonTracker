@@ -2189,11 +2189,16 @@
         }
         
         function startQrScanner() {
-            if (qrScannerActive) return;
+            if (qrScannerActive) {
+                showToast('Scanner is already active', 'info');
+                return;
+            }
             
             // Show scanner UI immediately
             document.getElementById('qrScannerContainer').style.display = 'block';
             document.getElementById('toggleQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
+            
+            showToast('Starting camera...', 'info');
             
             if (!qrScanner) {
                 qrScanner = new Html5Qrcode("qrReader");
@@ -2201,8 +2206,9 @@
             
             const config = { 
                 fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
+                qrbox: { width: 300, height: 300 },  // Larger scan area
+                aspectRatio: 1.0,
+                disableFlip: false  // Allow scanning from any angle
             };
             
             // Try back camera first (environment), then front camera if fails
@@ -2211,10 +2217,13 @@
                 config,
                 (decodedText) => {
                     // On successful scan
+                    console.log('✅ QR Code scanned:', decodedText);
+                    showToast('✅ Scanned: ' + decodedText, 'success');
                     document.getElementById('tripBoxInput').value = decodedText;
                     addBoxToTrip();
                     // Play success sound or vibrate
                     if (navigator.vibrate) navigator.vibrate(200);
+                    playSuccessBeep();
                 },
                 (errorMessage) => {
                     // Scanning errors are normal, ignore them
@@ -2222,6 +2231,7 @@
             ).then(() => {
                 qrScannerActive = true;
                 console.log('✅ Camera started successfully');
+                showToast('✅ Camera ready! Point at QR code', 'success');
             }).catch((err) => {
                 console.error('❌ Camera error:', err);
                 
@@ -2580,10 +2590,14 @@
         }
         
         function startReturnQrScanner() {
-            if (returnQrScannerActive) return;
+            if (returnQrScannerActive) {
+                showToast('Scanner is already active', 'info');
+                return;
+            }
             
             document.getElementById('returnQrScannerContainer').style.display = 'block';
             document.getElementById('toggleReturnQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
+            showToast('Starting camera...', 'info');
             
             if (!returnQrScanner) {
                 returnQrScanner = new Html5Qrcode("returnQrReader");
@@ -2591,8 +2605,9 @@
             
             const config = { 
                 fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
+                qrbox: { width: 300, height: 300 },  // Larger scan area
+                aspectRatio: 1.0,
+                disableFlip: false
             };
             
             returnQrScanner.start(
@@ -2600,7 +2615,9 @@
                 config,
                 (decodedText) => {
                     console.log('Return QR scanned:', decodedText);
+                    showToast('✅ Scanned: ' + decodedText, 'success');
                     processReturnBox(decodedText);
+                    playSuccessBeep();
                 },
                 (error) => {
                     // Ignore scan errors (happens continuously)
@@ -2608,6 +2625,7 @@
             ).then(() => {
                 returnQrScannerActive = true;
                 console.log('✅ Return camera started successfully');
+                showToast('✅ Camera ready! Point at QR code', 'success');
             }).catch(err => {
                 console.error('❌ Return camera error:', err);
                 
@@ -2704,10 +2722,14 @@
         }
         
         function startBoxRegistrationQr() {
-            if (boxRegQrScannerActive) return;
+            if (boxRegQrScannerActive) {
+                showToast('Scanner is already active', 'info');
+                return;
+            }
             
             document.getElementById('boxQrScannerContainer').style.display = 'block';
             document.getElementById('boxQrBtnText').textContent = 'Close Scanner';
+            showToast('Starting camera...', 'info');
             
             if (!boxRegQrScanner) {
                 boxRegQrScanner = new Html5Qrcode("boxQrReader");
@@ -2715,8 +2737,9 @@
             
             const config = { 
                 fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
+                qrbox: { width: 300, height: 300 },  // Larger scan area
+                aspectRatio: 1.0,
+                disableFlip: false
             };
             
             boxRegQrScanner.start(
@@ -2745,6 +2768,7 @@
             ).then(() => {
                 boxRegQrScannerActive = true;
                 console.log('✅ Box registration camera started successfully');
+                showToast('✅ Camera ready! Point at QR code', 'success');
             }).catch(err => {
                 console.error('❌ Box registration camera error:', err);
                 
