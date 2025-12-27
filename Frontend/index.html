@@ -2190,11 +2190,8 @@
         
         function startQrScanner() {
             if (qrScannerActive) return;
-            initializeQrScanner();
-        }
-        
-        function initializeQrScanner() {
-            const qrReaderElement = document.getElementById('qrReader');
+            
+            // Show scanner UI immediately
             document.getElementById('qrScannerContainer').style.display = 'block';
             document.getElementById('toggleQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
             
@@ -2231,11 +2228,11 @@
                 // Provide specific error messages
                 let errorMsg = 'Camera not accessible. ';
                 if (err.name === 'NotAllowedError' || err.message.includes('Permission') || err.message.includes('not allowed')) {
-                    errorMsg = '⚠️ Camera is being used by another app. Please close all other apps/tabs using the camera (like WhatsApp, Instagram, Camera app) and try again.';
+                    errorMsg = '⚠️ Please allow camera permission when prompted. If you blocked it, tap the lock icon in the address bar and enable camera access.';
                 } else if (err.name === 'NotFoundError') {
                     errorMsg = '⚠️ No camera found on this device.';
                 } else if (err.name === 'NotReadableError' || err.message.includes('not readable') || err.message.includes('Could not start')) {
-                    errorMsg = '⚠️ Camera is being used by another app. Please close other apps using the camera and try again.';
+                    errorMsg = '⚠️ Camera is being used by another app. Please close WhatsApp, Instagram, Camera app, and other apps using the camera, then try again.';
                 } else if (err.name === 'OverconstrainedError') {
                     // Try with front camera
                     console.log('Trying front camera...');
@@ -2584,10 +2581,7 @@
         
         function startReturnQrScanner() {
             if (returnQrScannerActive) return;
-            initializeReturnQrScanner();
-        }
-        
-        function initializeReturnQrScanner() {
+            
             document.getElementById('returnQrScannerContainer').style.display = 'block';
             document.getElementById('toggleReturnQrBtn').innerHTML = '<i class="fas fa-times me-1"></i>Close QR Scanner';
             
@@ -2711,10 +2705,7 @@
         
         function startBoxRegistrationQr() {
             if (boxRegQrScannerActive) return;
-            initializeBoxRegQrScanner();
-        }
-        
-        function initializeBoxRegQrScanner() {
+            
             document.getElementById('boxQrScannerContainer').style.display = 'block';
             document.getElementById('boxQrBtnText').textContent = 'Close Scanner';
             
@@ -2759,11 +2750,11 @@
                 
                 let errorMsg = 'Camera not accessible. ';
                 if (err.name === 'NotAllowedError' || err.message.includes('Permission') || err.message.includes('not allowed')) {
-                    errorMsg = '⚠️ Camera is being used by another app. Please close all other apps/tabs using the camera (WhatsApp, Instagram, Camera app) and try again.';
+                    errorMsg = '⚠️ Please allow camera permission. Tap the lock icon in address bar to enable camera access.';
                 } else if (err.name === 'NotFoundError') {
                     errorMsg = '⚠️ No camera found.';
                 } else if (err.name === 'NotReadableError' || err.message.includes('not readable') || err.message.includes('Could not start')) {
-                    errorMsg = '⚠️ Camera is being used by another app. Close other apps and try again.';
+                    errorMsg = '⚠️ Camera is being used by another app. Close WhatsApp, Instagram, Camera app and try again.';
                 } else if (err.name === 'OverconstrainedError') {
                     // Try front camera
                     boxRegQrScanner.start(
