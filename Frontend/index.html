@@ -855,12 +855,12 @@
                                 <label class="form-label fw-medium">Enter Box Number</label>
                                 <div class="input-group">
                                     <input type="text" id="manualBoxInput" class="form-control form-control-lg" 
-                                           placeholder="GS-B - 001">
+                                           placeholder="GS-B - 0001">
                                     <button class="btn btn-greenspoon" type="button" onclick="processManualBox()">
                                         <i class="fas fa-search me-1"></i>Search
                                     </button>
                                 </div>
-                                <small class="text-muted">Format: GS-B - 001</small>
+                                <small class="text-muted">Format: GS-B - 0001</small>
                             </div>
                         </div>
                     </div>
@@ -955,7 +955,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Enter Box Number</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="tripBoxInput" placeholder="GS-B - 001" autofocus>
+                                    <input type="text" class="form-control" id="tripBoxInput" placeholder="GS-B - 0001" autofocus>
                                     <button class="btn btn-greenspoon" type="button" onclick="addBoxToTrip()">
                                         <i class="fas fa-plus me-1"></i>Add Box
                                     </button>
@@ -1497,7 +1497,7 @@
                                    maxlength="4">
                         </div>
                         <div class="form-text mt-1">
-                            Preview: <span id="boxPreview" class="fw-bold text-primary">GS-B - 001</span>
+                            Preview: <span id="boxPreview" class="fw-bold text-primary">GS-B - 0001</span>
                         </div>
                     </div>
                 </div>
@@ -2751,8 +2751,8 @@
                     // Parse the box number from QR code
                     const boxNumber = decodedText.trim();
                     
-                    // Extract the numeric suffix (e.g., "001" from "GS-B - 001")
-                    const match = boxNumber.match(/GS-B\s*-\s*(\d{3})/i);
+                    // Extract the numeric suffix (e.g., "0001" from "GS-B - 0001")
+                    const match = boxNumber.match(/GS-B\s*-\s*(\d{4})/i);
                     if (match) {
                         document.getElementById('boxNumberSuffix').value = match[1];
                         updateBoxPreview();
@@ -2787,7 +2787,7 @@
                         config,
                         (decodedText) => {
                             const boxNumber = decodedText.trim();
-                            const match = boxNumber.match(/GS-B\s*-\s*(\d{3})/i);
+                            const match = boxNumber.match(/GS-B\s*-\s*(\d{4})/i);
                             if (match) {
                                 document.getElementById('boxNumberSuffix').value = match[1];
                                 updateBoxPreview();
@@ -2892,8 +2892,8 @@
 
         function updateBoxPreview() {
             const type = document.getElementById('boxTypeDisplay').textContent;
-            const suffix = document.getElementById('boxNumberSuffix').value.trim() || '001';
-            document.getElementById('boxPreview').textContent = `GS-${type} - ${suffix.padStart(3, '0')}`;
+            const suffix = document.getElementById('boxNumberSuffix').value.trim() || '0001';
+            document.getElementById('boxPreview').textContent = `GS-${type} - ${suffix.padStart(4, '0')}`;
         }
 
         function saveNewBox() {
@@ -2905,7 +2905,7 @@
                 return;
             }
             
-            const boxNumber = `GS-${type} - ${suffix.padStart(3, '0')}`;
+            const boxNumber = `GS-${type} - ${suffix.padStart(4, '0')}`;
             
             fetch(`${API_BASE_URL}/api/boxes`, {
                 method: 'POST',

@@ -122,12 +122,12 @@ function seedInitialData() {
         if (result.count === 0) {
             console.log('Seeding sample boxes...');
             const boxes = [
-                ['GS-B - 001', 'B', 'available'],
-                ['GS-B - 002', 'B', 'available'],
-                ['GS-B - 003', 'B', 'available'],
-                ['GS-B - 004', 'B', 'available'],
-                ['GS-B - 005', 'B', 'available'],
-                ['GS-B - 006', 'B', 'available']
+                ['GS-B - 0001', 'B', 'available'],
+                ['GS-B - 0002', 'B', 'available'],
+                ['GS-B - 0003', 'B', 'available'],
+                ['GS-B - 0004', 'B', 'available'],
+                ['GS-B - 0005', 'B', 'available'],
+                ['GS-B - 0006', 'B', 'available']
             ];
             
             const stmt = db.prepare('INSERT OR IGNORE INTO boxes (box_number, box_type, status) VALUES (?, ?, ?)');
