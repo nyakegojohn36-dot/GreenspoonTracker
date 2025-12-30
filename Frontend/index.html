@@ -864,6 +864,11 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button">
+                    <i class="fas fa-clock me-2"></i>Rider Attendance
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button">
                     <i class="fas fa-chart-bar me-2"></i>Analytics
                 </button>
@@ -1469,6 +1474,65 @@
                 </div>
             </div>
 
+            <!-- Rider Attendance Tab -->
+            <div class="tab-pane fade" id="attendance" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clock me-2 text-info"></i>Rider Attendance
+                    </h4>
+                    <div class="action-buttons">
+                        <input type="date" id="attendanceDate" class="form-control d-inline-block" style="width: auto;" />
+                        <button class="btn btn-greenspoon ms-2" onclick="loadAttendanceForDate()">
+                            <i class="fas fa-sync-alt me-1"></i>Load
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="scanner-container">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Record Rider Arrival/Departure</h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Rider</label>
+                                        <select id="attendanceRiderId" class="form-select">
+                                            <option value="">-- Select Rider --</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Arrival Time</label>
+                                            <input type="time" id="arrivalTime" class="form-control" />
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Departure Time</label>
+                                            <input type="time" id="departureTime" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-greenspoon w-100" onclick="saveAttendance()">
+                                        <i class="fas fa-save me-1"></i>Save Attendance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Today's Attendance</h5>
+                                    <div id="attendanceList" class="list-group">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-user-clock fa-2x mb-2"></i>
+                                            <p>No attendance records yet</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Analytics Tab -->
             <div class="tab-pane fade" id="analytics" role="tabpanel">{
                 <div class="row g-4">
@@ -1732,8 +1796,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Greenspoon Box Tracker v1.2 Initializing...');
             
-            // Set today's date as default for report
+            // Set today's date as default for report and attendance
             document.getElementById('reportDate').valueAsDate = new Date();
+            document.getElementById('attendanceDate').valueAsDate = new Date();
+            
+            // Populate rider dropdown for attendance
+            populateAttendanceRiderDropdown();
             
             // Update date time
             updateDateTime();
@@ -3759,6 +3827,127 @@
             window.URL.revokeObjectURL(url);
             
             showToast('Report downloaded successfully!', 'success');
+        }
+
+        // ============= RIDER ATTENDANCE FUNCTIONS =============
+        function loadAttendanceForDate() {
+            const dateInput = document.getElementById('attendanceDate');
+            const selectedDate = dateInput.value || new Date().toISOString().split('T')[0];
+            
+            fetch(`${API_BASE_URL}/api/attendance?date=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayAttendanceRecords(data.records);
+                    } else {
+                        showToast('Error loading attendance: ' + data.error, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading attendance:', error);
+                    showToast('Failed to load attendance', 'danger');
+                });
+        }
+        
+        function displayAttendanceRecords(records) {
+            const listDiv = document.getElementById('attendanceList');
+            
+            if (!records || records.length === 0) {
+                listDiv.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-user-clock fa-2x mb-2"></i>
+                        <p>No attendance records for this date</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listDiv.innerHTML = records.map(record => `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${record.rider_name}</h6>
+                            <small class="text-muted">ID: ${record.rider_id}</small>
+                        </div>
+                        <div class="text-end">
+                            <div><i class="fas fa-sign-in-alt text-success"></i> ${record.arrival_time || 'N/A'}</div>
+                            <div><i class="fas fa-sign-out-alt text-danger"></i> ${record.departure_time || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function saveAttendance() {
+            const riderSelect = document.getElementById('attendanceRiderId');
+            const dateInput = document.getElementById('attendanceDate');
+            const arrivalInput = document.getElementById('arrivalTime');
+            const departureInput = document.getElementById('departureTime');
+            
+            const riderId = riderSelect.value;
+            const riderName = riderSelect.options[riderSelect.selectedIndex]?.text;
+            const date = dateInput.value || new Date().toISOString().split('T')[0];
+            const arrivalTime = arrivalInput.value;
+            const departureTime = departureInput.value;
+            
+            if (!riderId) {
+                showToast('Please select a rider', 'warning');
+                return;
+            }
+            
+            if (!arrivalTime && !departureTime) {
+                showToast('Please enter at least arrival or departure time', 'warning');
+                return;
+            }
+            
+            const data = {
+                rider_id: riderId,
+                rider_name: riderName,
+                date: date,
+                arrival_time: arrivalTime || null,
+                departure_time: departureTime || null
+            };
+            
+            fetch(`${API_BASE_URL}/api/attendance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    arrivalInput.value = '';
+                    departureInput.value = '';
+                    riderSelect.value = '';
+                    loadAttendanceForDate();
+                } else {
+                    showToast('Error: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving attendance:', error);
+                showToast('Failed to save attendance', 'danger');
+            });
+        }
+        
+        function populateAttendanceRiderDropdown() {
+            fetch(`${API_BASE_URL}/api/riders`)
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('attendanceRiderId');
+                    select.innerHTML = '<option value="">-- Select Rider --</option>';
+                    
+                    if (data.riders && data.riders.length > 0) {
+                        data.riders.forEach(rider => {
+                            const option = document.createElement('option');
+                            option.value = rider.rider_id;
+                            option.textContent = rider.name;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading riders:', error));
         }
 
         // ============= TAB SWITCHING EVENT LISTENERS =============

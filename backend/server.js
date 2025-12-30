@@ -93,6 +93,17 @@ function initializeDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         
+        CREATE TABLE IF NOT EXISTS rider_attendance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rider_id TEXT NOT NULL,
+            rider_name TEXT NOT NULL,
+            date TEXT NOT NULL,
+            arrival_time TEXT,
+            departure_time TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(rider_id, date)
+        );
+        
         -- Performance indexes for faster queries
         CREATE INDEX IF NOT EXISTS idx_boxes_status ON boxes(status);
         CREATE INDEX IF NOT EXISTS idx_boxes_number ON boxes(box_number);
@@ -783,6 +794,23 @@ app.get('/api/reports/daily', async (req, res) => {
         
         console.log(`Found ${trips.length} trips for ${date}`);
         
+        // Get manual attendance records for this date
+        const attendanceRecords = await dbAll(
+            'SELECT * FROM rider_attendance WHERE date = ?',
+            [date]
+        );
+        
+        // Create a map of attendance by rider_id for quick lookup
+        const attendanceMap = new Map();
+        attendanceRecords.forEach(record => {
+            attendanceMap.set(record.rider_id, {
+                arrival_time: record.arrival_time,
+                departure_time: record.departure_time
+            });
+        });
+        
+        console.log(`Found ${attendanceRecords.length} attendance records for ${date}`);
+        
         // Group trips by rider
         const riderMap = new Map();
         
@@ -833,6 +861,22 @@ app.get('/api/reports/daily', async (req, res) => {
         // Convert map to array
         const riders = Array.from(riderMap.values());
         
+        // Override with manual attendance times if available
+        riders.forEach(rider => {
+            const attendance = attendanceMap.get(rider.rider_id);
+            if (attendance) {
+                // Convert time strings (HH:MM) to full datetime for consistency
+                if (attendance.arrival_time) {
+                    rider.firstDeparture = `${date}T${attendance.arrival_time}:00`;
+                    rider.manualArrival = true;
+                }
+                if (attendance.departure_time) {
+                    rider.lastReturn = `${date}T${attendance.departure_time}:00`;
+                    rider.manualDeparture = true;
+                }
+            }
+        });
+        
         // Sort riders by first departure time
         riders.sort((a, b) => new Date(a.firstDeparture) - new Date(b.firstDeparture));
         
@@ -851,6 +895,98 @@ app.get('/api/reports/daily', async (req, res) => {
         res.status(500).json({ 
             success: false, 
             error: 'Failed to generate daily report: ' + error.message 
+        });
+    }
+});
+
+// =========== RIDER ATTENDANCE ENDPOINTS ===========
+// Save or update rider attendance
+app.post('/api/attendance', async (req, res) => {
+    try {
+        const { rider_id, rider_name, date, arrival_time, departure_time } = req.body;
+        
+        if (!rider_id || !date) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Rider ID and date are required' 
+            });
+        }
+        
+        console.log(`⏰ Saving attendance for ${rider_name} on ${date}`);
+        
+        // Check if attendance record exists
+        const existing = await dbGet(
+            'SELECT * FROM rider_attendance WHERE rider_id = ? AND date = ?',
+            [rider_id, date]
+        );
+        
+        if (existing) {
+            // Update existing record
+            await dbRun(
+                `UPDATE rider_attendance 
+                 SET rider_name = ?, arrival_time = ?, departure_time = ?
+                 WHERE rider_id = ? AND date = ?`,
+                [rider_name, arrival_time, departure_time, rider_id, date]
+            );
+            
+            res.json({
+                success: true,
+                message: 'Attendance updated successfully',
+                data: { rider_id, rider_name, date, arrival_time, departure_time }
+            });
+        } else {
+            // Insert new record
+            await dbRun(
+                `INSERT INTO rider_attendance (rider_id, rider_name, date, arrival_time, departure_time)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [rider_id, rider_name, date, arrival_time, departure_time]
+            );
+            
+            res.json({
+                success: true,
+                message: 'Attendance recorded successfully',
+                data: { rider_id, rider_name, date, arrival_time, departure_time }
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error saving attendance:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to save attendance: ' + error.message 
+        });
+    }
+});
+
+// Get attendance records for a specific date
+app.get('/api/attendance', async (req, res) => {
+    try {
+        const { date } = req.query;
+        
+        if (!date) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Date parameter is required' 
+            });
+        }
+        
+        const records = await dbAll(
+            'SELECT * FROM rider_attendance WHERE date = ? ORDER BY arrival_time',
+            [date]
+        );
+        
+        res.json({
+            success: true,
+            date: date,
+            records: records,
+            count: records.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fetching attendance:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch attendance: ' + error.message 
         });
     }
 });
