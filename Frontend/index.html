@@ -598,6 +598,36 @@
                 max-width: 100% !important;
             }
             
+            /* Daily Report Styles */
+            .report-content {
+                font-family: 'Courier New', monospace;
+                white-space: pre-wrap;
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                line-height: 1.8;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+            
+            .report-header {
+                font-weight: bold;
+                font-size: 18px;
+                text-align: center;
+                margin-bottom: 20px;
+                text-decoration: underline;
+            }
+            
+            .report-section {
+                margin-bottom: 20px;
+            }
+            
+            .report-rider {
+                margin-bottom: 15px;
+                padding-left: 20px;
+            }
+            
             .btn-greenspoon, .btn-outline-greenspoon {
                 padding: 10px 20px;
                 font-size: 0.9rem;
@@ -826,6 +856,11 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button">
                     <i class="fas fa-exclamation-triangle me-2"></i>Reports
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="daily-report-tab" data-bs-toggle="tab" data-bs-target="#daily-report" type="button">
+                    <i class="fas fa-file-alt me-2"></i>Daily Trip Report
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -1407,8 +1442,35 @@
                 </div>
             </div>
 
+            <!-- Daily Trip Report Tab -->
+            <div class="tab-pane fade" id="daily-report" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-alt me-2 text-success"></i>Daily Trip Report
+                    </h4>
+                    <div class="action-buttons">
+                        <input type="date" id="reportDate" class="form-control d-inline-block" style="width: auto;" />
+                        <button class="btn btn-greenspoon ms-2" onclick="generateDailyReport()">
+                            <i class="fas fa-sync-alt me-1"></i>Generate Report
+                        </button>
+                        <button class="btn btn-outline-success ms-2" onclick="downloadDailyReport()" id="downloadReportBtn" style="display:none;">
+                            <i class="fas fa-download me-1"></i>Download Report
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="scanner-container">
+                    <div id="dailyReportContent" class="report-content">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-calendar-day fa-3x mb-3"></i>
+                            <p>Select a date and click "Generate Report" to view the daily trip report</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Analytics Tab -->
-            <div class="tab-pane fade" id="analytics" role="tabpanel">
+            <div class="tab-pane fade" id="analytics" role="tabpanel">{
                 <div class="row g-4">
                     <div class="col-lg-8">
                         <div class="scanner-container">
@@ -1669,6 +1731,9 @@
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Greenspoon Box Tracker v1.2 Initializing...');
+            
+            // Set today's date as default for report
+            document.getElementById('reportDate').valueAsDate = new Date();
             
             // Update date time
             updateDateTime();
@@ -3585,6 +3650,115 @@
             toast.addEventListener('hidden.bs.toast', function() {
                 toast.remove();
             });
+        }
+
+        // ============= DAILY REPORT FUNCTIONS =============
+        function generateDailyReport() {
+            const dateInput = document.getElementById('reportDate');
+            const selectedDate = dateInput.value || new Date().toISOString().split('T')[0];
+            
+            showToast('Generating daily report...', 'info');
+            
+            fetch(`${API_BASE_URL}/api/reports/daily?date=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayDailyReport(data.report, selectedDate);
+                        document.getElementById('downloadReportBtn').style.display = 'inline-block';
+                        showToast('Report generated successfully!', 'success');
+                    } else {
+                        showToast('Error generating report: ' + data.error, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error generating report:', error);
+                    showToast('Failed to generate report', 'danger');
+                });
+        }
+        
+        function displayDailyReport(reportData, date) {
+            const content = document.getElementById('dailyReportContent');
+            const formattedDate = new Date(date).toLocaleDateString('en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            
+            let reportHTML = `<div class="report-header">GREENSPOON BOX TRACKER - DAILY TRIP REPORT\n${formattedDate}</div>\n\n`;
+            
+            // STAFF IN AND OUT Section
+            reportHTML += `<div class="report-section"><strong>STAFFS IN AND OUT</strong>\n\n`;
+            
+            if (reportData.riders && reportData.riders.length > 0) {
+                reportData.riders.forEach((rider, index) => {
+                    const arrivalTime = rider.firstDeparture ? formatTime(rider.firstDeparture) : 'N/A';
+                    const leftTime = rider.lastReturn ? formatTime(rider.lastReturn) : 'Still Out';
+                    reportHTML += `${index + 1}. ${rider.name} arrived at the site at ${arrivalTime} hours and left at ${leftTime} hours\n`;
+                });
+            } else {
+                reportHTML += 'No rider activity recorded for this date.\n';
+            }
+            
+            reportHTML += `</div>\n\n`;
+            
+            // DISPATCH DETAILS Section
+            if (reportData.riders && reportData.riders.length > 0) {
+                reportData.riders.forEach(rider => {
+                    if (rider.trips && rider.trips.length > 0) {
+                        reportHTML += `<div class="report-rider">`;
+                        reportHTML += `Mr. ${rider.name} phone number ${rider.phone || 'N/A'} `;
+                        reportHTML += `motorbike registration number ${rider.number_plate || 'N/A'}, `;
+                        reportHTML += `left the shop to do the dispatches as follows:\n`;
+                        
+                        rider.trips.forEach(trip => {
+                            const departTime = formatTime(trip.departure_time);
+                            const boxCount = Array.isArray(trip.boxes) ? trip.boxes.length : JSON.parse(trip.boxes || '[]').length;
+                            reportHTML += `  - at ${departTime} hours ${trip.destination} ${boxCount} ${boxCount === 1 ? 'box' : 'boxes'} dispatched\n`;
+                        });
+                        
+                        reportHTML += `</div>\n\n`;
+                    }
+                });
+            }
+            
+            reportHTML += `\n<div class="text-muted text-center mt-4">Report Generated: ${new Date().toLocaleString()}</div>`;
+            
+            content.innerHTML = reportHTML;
+            window.currentReport = reportHTML; // Store for download
+        }
+        
+        function formatTime(dateTimeString) {
+            const date = new Date(dateTimeString);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return hours + minutes;
+        }
+        
+        function downloadDailyReport() {
+            if (!window.currentReport) {
+                showToast('No report to download. Generate a report first.', 'warning');
+                return;
+            }
+            
+            const dateInput = document.getElementById('reportDate');
+            const selectedDate = dateInput.value || new Date().toISOString().split('T')[0];
+            const filename = `Daily_Report_${selectedDate}.txt`;
+            
+            // Convert HTML to plain text
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = window.currentReport;
+            const plainText = tempDiv.textContent || tempDiv.innerText;
+            
+            // Create download
+            const blob = new Blob([plainText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast('Report downloaded successfully!', 'success');
         }
 
         // ============= TAB SWITCHING EVENT LISTENERS =============

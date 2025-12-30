@@ -749,6 +749,112 @@ app.post('/api/trips/fix-status', async (req, res) => {
     }
 });
 
+// =========== DAILY REPORT ENDPOINT ===========
+app.get('/api/reports/daily', async (req, res) => {
+    try {
+        const { date } = req.query;
+        
+        if (!date) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Date parameter is required (format: YYYY-MM-DD)' 
+            });
+        }
+        
+        console.log(`📊 Generating daily report for: ${date}`);
+        
+        // Parse date to get start and end of day
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const startISO = startDate.toISOString();
+        const endISO = endDate.toISOString();
+        
+        // Get all trips for the date
+        const trips = await dbAll(
+            `SELECT * FROM trips 
+             WHERE departure_time >= ? AND departure_time <= ?
+             ORDER BY rider_id, departure_time ASC`,
+            [startISO, endISO]
+        );
+        
+        console.log(`Found ${trips.length} trips for ${date}`);
+        
+        // Group trips by rider
+        const riderMap = new Map();
+        
+        for (const trip of trips) {
+            if (!riderMap.has(trip.rider_id)) {
+                // Get rider details
+                const rider = await dbGet(
+                    'SELECT * FROM riders WHERE rider_id = ?',
+                    [trip.rider_id]
+                );
+                
+                riderMap.set(trip.rider_id, {
+                    rider_id: trip.rider_id,
+                    name: trip.rider_name,
+                    phone: rider?.phone || null,
+                    number_plate: rider?.number_plate || null,
+                    firstDeparture: trip.departure_time,
+                    lastReturn: trip.return_time,
+                    trips: []
+                });
+            }
+            
+            const riderData = riderMap.get(trip.rider_id);
+            
+            // Update first departure (earliest)
+            if (new Date(trip.departure_time) < new Date(riderData.firstDeparture)) {
+                riderData.firstDeparture = trip.departure_time;
+            }
+            
+            // Update last return (latest)
+            if (trip.return_time) {
+                if (!riderData.lastReturn || new Date(trip.return_time) > new Date(riderData.lastReturn)) {
+                    riderData.lastReturn = trip.return_time;
+                }
+            }
+            
+            // Add trip to rider's trips
+            riderData.trips.push({
+                trip_id: trip.trip_id,
+                destination: trip.destination,
+                boxes: trip.boxes,
+                departure_time: trip.departure_time,
+                return_time: trip.return_time,
+                status: trip.status
+            });
+        }
+        
+        // Convert map to array
+        const riders = Array.from(riderMap.values());
+        
+        // Sort riders by first departure time
+        riders.sort((a, b) => new Date(a.firstDeparture) - new Date(b.firstDeparture));
+        
+        res.json({
+            success: true,
+            date: date,
+            report: {
+                riders: riders,
+                totalTrips: trips.length,
+                totalRiders: riders.length
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Daily report generation error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to generate daily report: ' + error.message 
+        });
+    }
+});
+
 // Process box return
 app.post('/api/return/process', async (req, res) => {
     try {
