@@ -395,7 +395,7 @@ app.get('/api/riders', async (req, res) => {
 app.post('/api/riders', async (req, res) => {
     try {
         console.log('Creating new rider:', req.body);
-        const { rider_id, name } = req.body;
+        const { rider_id, name, phone, number_plate } = req.body;
         
         if (!rider_id || !name) {
             return res.status(400).json({
@@ -405,8 +405,8 @@ app.post('/api/riders', async (req, res) => {
         }
         
         const result = await dbRun(
-            'INSERT INTO riders (rider_id, name) VALUES (?, ?)',
-            [rider_id, name]
+            'INSERT INTO riders (rider_id, name, phone, number_plate) VALUES (?, ?, ?, ?)',
+            [rider_id, name, phone || null, number_plate || null]
         );
         
         const newRider = await dbGet('SELECT * FROM riders WHERE id = ?', [result.lastID]);
