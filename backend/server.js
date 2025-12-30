@@ -5,6 +5,7 @@ const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 const https = require('https');
 const http = require('http');
+const cron = require('node-cron');
 
 const app = express();
 app.use(cors());
@@ -102,6 +103,13 @@ function initializeDatabase() {
             departure_time TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(rider_id, date)
+        );
+        
+        CREATE TABLE IF NOT EXISTS daily_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            report_date TEXT UNIQUE NOT NULL,
+            report_content TEXT NOT NULL,
+            generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         
         -- Performance indexes for faster queries
@@ -991,6 +999,259 @@ app.get('/api/attendance', async (req, res) => {
     }
 });
 
+// =========== DAILY REPORT STORAGE & RETRIEVAL ===========
+// Get all stored daily reports
+app.get('/api/reports/archive', async (req, res) => {
+    try {
+        const reports = await dbAll(
+            'SELECT id, report_date, generated_at FROM daily_reports ORDER BY report_date DESC LIMIT 30'
+        );
+        
+        res.json({
+            success: true,
+            reports: reports,
+            count: reports.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fetching report archive:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch report archive: ' + error.message 
+        });
+    }
+});
+
+// Get specific report content by date
+app.get('/api/reports/archive/:date', async (req, res) => {
+    try {
+        const { date } = req.params;
+        
+        const report = await dbGet(
+            'SELECT * FROM daily_reports WHERE report_date = ?',
+            [date]
+        );
+        
+        if (!report) {
+            return res.status(404).json({
+                success: false,
+                error: 'Report not found for this date'
+            });
+        }
+        
+        res.json({
+            success: true,
+            report: report
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fetching report:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch report: ' + error.message 
+        });
+    }
+});
+
+// Function to generate and store daily report
+async function generateAndStoreDailyReport(targetDate = null) {
+    try {
+        const date = targetDate || new Date().toISOString().split('T')[0];
+        console.log(`📊 Auto-generating daily report for ${date}...`);
+        
+        // Parse date to get start and end of day
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const startISO = startDate.toISOString();
+        const endISO = endDate.toISOString();
+        
+        // Get all trips for the date
+        const trips = await dbAll(
+            `SELECT * FROM trips 
+             WHERE departure_time >= ? AND departure_time <= ?
+             ORDER BY rider_id, departure_time ASC`,
+            [startISO, endISO]
+        );
+        
+        // Get manual attendance records
+        const attendanceRecords = await dbAll(
+            'SELECT * FROM rider_attendance WHERE date = ?',
+            [date]
+        );
+        
+        const attendanceMap = new Map();
+        attendanceRecords.forEach(record => {
+            attendanceMap.set(record.rider_id, {
+                arrival_time: record.arrival_time,
+                departure_time: record.departure_time
+            });
+        });
+        
+        // Group trips by rider
+        const riderMap = new Map();
+        
+        for (const trip of trips) {
+            if (!riderMap.has(trip.rider_id)) {
+                const rider = await dbGet(
+                    'SELECT * FROM riders WHERE rider_id = ?',
+                    [trip.rider_id]
+                );
+                
+                riderMap.set(trip.rider_id, {
+                    rider_id: trip.rider_id,
+                    name: trip.rider_name,
+                    phone: rider?.phone || null,
+                    number_plate: rider?.number_plate || null,
+                    firstDeparture: trip.departure_time,
+                    lastReturn: trip.return_time,
+                    trips: []
+                });
+            }
+            
+            const riderData = riderMap.get(trip.rider_id);
+            
+            if (new Date(trip.departure_time) < new Date(riderData.firstDeparture)) {
+                riderData.firstDeparture = trip.departure_time;
+            }
+            
+            if (trip.return_time) {
+                if (!riderData.lastReturn || new Date(trip.return_time) > new Date(riderData.lastReturn)) {
+                    riderData.lastReturn = trip.return_time;
+                }
+            }
+            
+            riderData.trips.push({
+                trip_id: trip.trip_id,
+                destination: trip.destination,
+                boxes: trip.boxes,
+                departure_time: trip.departure_time,
+                return_time: trip.return_time,
+                status: trip.status
+            });
+        }
+        
+        const riders = Array.from(riderMap.values());
+        
+        // Override with manual attendance times if available
+        riders.forEach(rider => {
+            const attendance = attendanceMap.get(rider.rider_id);
+            if (attendance) {
+                if (attendance.arrival_time) {
+                    rider.firstDeparture = `${date}T${attendance.arrival_time}:00`;
+                }
+                if (attendance.departure_time) {
+                    rider.lastReturn = `${date}T${attendance.departure_time}:00`;
+                }
+            }
+        });
+        
+        riders.sort((a, b) => new Date(a.firstDeparture) - new Date(b.firstDeparture));
+        
+        // Format report as plain text
+        const formattedDate = new Date(date).toLocaleDateString('en-US', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+        
+        let reportText = `GREENSPOON BOX TRACKER - DAILY TRIP REPORT\n${formattedDate}\n\n`;
+        reportText += `STAFFS IN AND OUT\n\n`;
+        
+        if (riders.length > 0) {
+            riders.forEach((rider, index) => {
+                const formatTime = (dateTimeString) => {
+                    if (!dateTimeString) return 'N/A';
+                    const d = new Date(dateTimeString);
+                    const hours = String(d.getHours()).padStart(2, '0');
+                    const minutes = String(d.getMinutes()).padStart(2, '0');
+                    return hours + minutes;
+                };
+                
+                const arrivalTime = rider.firstDeparture ? formatTime(rider.firstDeparture) : 'N/A';
+                const leftTime = rider.lastReturn ? formatTime(rider.lastReturn) : 'Still Out';
+                reportText += `${index + 1}. ${rider.name} arrived at the site at ${arrivalTime} hours and left at ${leftTime} hours\n`;
+            });
+            
+            reportText += `\nDISPATCH DETAILS\n\n`;
+            
+            riders.forEach(rider => {
+                if (rider.trips.length > 0) {
+                    reportText += `Mr. ${rider.name} phone number ${rider.phone || 'N/A'} `;
+                    reportText += `motorbike registration number ${rider.number_plate || 'N/A'}, `;
+                    reportText += `left the shop to do the dispatches as follows:\n`;
+                    
+                    rider.trips.forEach(trip => {
+                        const formatTime = (dateTimeString) => {
+                            const d = new Date(dateTimeString);
+                            const hours = String(d.getHours()).padStart(2, '0');
+                            const minutes = String(d.getMinutes()).padStart(2, '0');
+                            return hours + minutes;
+                        };
+                        
+                        const departTime = formatTime(trip.departure_time);
+                        const boxCount = Array.isArray(trip.boxes) ? trip.boxes.length : JSON.parse(trip.boxes || '[]').length;
+                        reportText += `  - at ${departTime} hours ${trip.destination} ${boxCount} ${boxCount === 1 ? 'box' : 'boxes'} dispatched\n`;
+                    });
+                    reportText += `\n`;
+                }
+            });
+        } else {
+            reportText += `No trips recorded for this date.\n`;
+        }
+        
+        reportText += `\n---\nReport generated at: ${new Date().toLocaleString()}\n`;
+        reportText += `Total Riders: ${riders.length} | Total Trips: ${trips.length}\n`;
+        
+        // Store in database
+        const existing = await dbGet(
+            'SELECT id FROM daily_reports WHERE report_date = ?',
+            [date]
+        );
+        
+        if (existing) {
+            await dbRun(
+                'UPDATE daily_reports SET report_content = ?, generated_at = CURRENT_TIMESTAMP WHERE report_date = ?',
+                [reportText, date]
+            );
+            console.log(`✅ Updated existing report for ${date}`);
+        } else {
+            await dbRun(
+                'INSERT INTO daily_reports (report_date, report_content) VALUES (?, ?)',
+                [date, reportText]
+            );
+            console.log(`✅ Stored new report for ${date}`);
+        }
+        
+        return { success: true, date: date, content: reportText };
+        
+    } catch (error) {
+        console.error('❌ Error generating/storing report:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Endpoint to manually trigger report generation
+app.post('/api/reports/generate/:date', async (req, res) => {
+    try {
+        const { date } = req.params;
+        const result = await generateAndStoreDailyReport(date);
+        
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(500).json(result);
+        }
+    } catch (error) {
+        console.error('❌ Error in manual report generation:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
+
 // Process box return
 app.post('/api/return/process', async (req, res) => {
     try {
@@ -1213,6 +1474,17 @@ if (isDevelopment) {
         console.log('⚠️  HTTPS server skipped (selfsigned module not available)');
     }
 }
+
+// =========== SCHEDULED DAILY REPORT (6:00 PM) ===========
+// Schedule report generation at 6:00 PM daily (East Africa Time - adjust if needed)
+cron.schedule('0 18 * * *', async () => {
+    console.log('⏰ 6:00 PM - Running scheduled daily report generation...');
+    await generateAndStoreDailyReport();
+}, {
+    timezone: "Africa/Nairobi" // Adjust timezone as needed
+});
+
+console.log('⏰ Daily report scheduler activated (runs at 6:00 PM)');
 
 // Handle shutdown
 process.on('SIGINT', () => {
