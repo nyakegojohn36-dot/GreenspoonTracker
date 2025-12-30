@@ -38,9 +38,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         await db.ensureInitialized();
-        const { name, phone, email, vehicle_type, license_number } = req.body;
+        const { name, phone, number_plate, email, vehicle_type, license_number } = req.body;
         
-        console.log('📝 Frontend sent rider data:', { name, phone, email, vehicle_type });
+        console.log('📝 Frontend sent rider data:', { name, phone, number_plate, email, vehicle_type });
         
         // ✅ VALIDATION FOR FRONTEND DATA
         if (!name) {
@@ -69,33 +69,27 @@ router.post('/', async (req, res) => {
         
         // ✅ Check for duplicate name/phone combination
         const existingRider = await db.get(
-            'SELECT * FROM riders WHERE name = ? AND phone = ?', 
+            'SELECT * FROM riders WHERE name = ? OR phone = ?', 
             [name, phone]
         );
         
         if (existingRider) {
             return res.status(409).json({ 
                 success: false, 
-                error: `Rider ${name} with phone ${phone} already exists` 
+                error: `Rider with name or phone already exists` 
             });
         }
         
         // ✅ INSERT RIDER WITH ALL FIELDS FRONTEND EXPECTS
         const result = await db.run(
             `INSERT INTO riders (
-                rider_id, name, phone, email, 
-                vehicle_type, license_number, 
-                status, notes, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+                rider_id, name, phone, number_plate
+            ) VALUES (?, ?, ?, ?)`,
             [
                 rider_id,                  // Auto-generated ID
                 name,                      // From frontend
                 phone || '',               // From frontend (empty if not provided)
-                email || '',               // From frontend (empty if not provided)
-                vehicle_type || 'motorcycle', // From frontend, default motorcycle
-                license_number || '',      // From frontend (empty if not provided)
-                'active',                  // Default status
-                '',                        // Empty notes
+                number_plate || ''         // From frontend (empty if not provided)
             ]
         );
         
@@ -108,13 +102,7 @@ router.post('/', async (req, res) => {
                 rider_id,
                 name,
                 phone,
-                email,
-                vehicle_type,
-                license_number,
-                status,
-                notes,
-                created_at,
-                updated_at
+                number_plate
              FROM riders WHERE id = ?`, 
             [result.id]
         );

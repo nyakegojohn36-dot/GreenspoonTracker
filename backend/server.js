@@ -74,7 +74,9 @@ function initializeDatabase() {
         CREATE TABLE IF NOT EXISTS riders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             rider_id TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL
+            name TEXT NOT NULL,
+            phone TEXT,
+            number_plate TEXT
         );
         
         CREATE TABLE IF NOT EXISTS trips (
