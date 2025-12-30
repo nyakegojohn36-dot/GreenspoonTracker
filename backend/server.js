@@ -107,8 +107,41 @@ function initializeDatabase() {
             console.error('Table creation error:', err.message);
         } else {
             console.log('✅ Database tables created with indexes');
-            seedInitialData();
+            migrateRidersTable();
         }
+    });
+}
+
+// Migrate riders table to add new columns if they don't exist
+function migrateRidersTable() {
+    // Check if phone column exists
+    db.all("PRAGMA table_info(riders)", (err, columns) => {
+        if (err) {
+            console.error('Error checking table structure:', err);
+            seedInitialData();
+            return;
+        }
+        
+        const hasPhone = columns.some(col => col.name === 'phone');
+        const hasNumberPlate = columns.some(col => col.name === 'number_plate');
+        
+        if (!hasPhone) {
+            console.log('📝 Adding phone column to riders table...');
+            db.run("ALTER TABLE riders ADD COLUMN phone TEXT", (err) => {
+                if (err) console.error('Error adding phone column:', err);
+                else console.log('✅ Phone column added');
+            });
+        }
+        
+        if (!hasNumberPlate) {
+            console.log('📝 Adding number_plate column to riders table...');
+            db.run("ALTER TABLE riders ADD COLUMN number_plate TEXT", (err) => {
+                if (err) console.error('Error adding number_plate column:', err);
+                else console.log('✅ Number plate column added');
+            });
+        }
+        
+        seedInitialData();
     });
 }
 
