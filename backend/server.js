@@ -782,25 +782,20 @@ app.get('/api/reports/daily', async (req, res) => {
         
         console.log(`📊 Generating daily report for: ${date}`);
         
-        // Parse date to get start and end of day
-        const startDate = new Date(date);
-        startDate.setHours(0, 0, 0, 0);
-        
-        const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999);
-        
-        const startISO = startDate.toISOString();
-        const endISO = endDate.toISOString();
-        
-        // Get all trips for the date
+        // Query trips using SQLite's DATE() function to match by date only
+        // This handles timezone issues by comparing just the date portion
         const trips = await dbAll(
             `SELECT * FROM trips 
-             WHERE departure_time >= ? AND departure_time <= ?
+             WHERE DATE(departure_time) = ?
              ORDER BY rider_id, departure_time ASC`,
-            [startISO, endISO]
+            [date]
         );
         
         console.log(`Found ${trips.length} trips for ${date}`);
+        console.log('Sample trip times:', trips.slice(0, 2).map(t => ({ 
+            id: t.trip_id, 
+            departure: t.departure_time 
+        })));
         
         // Get manual attendance records for this date
         const attendanceRecords = await dbAll(
@@ -1059,23 +1054,15 @@ async function generateAndStoreDailyReport(targetDate = null) {
         const date = targetDate || new Date().toISOString().split('T')[0];
         console.log(`📊 Auto-generating daily report for ${date}...`);
         
-        // Parse date to get start and end of day
-        const startDate = new Date(date);
-        startDate.setHours(0, 0, 0, 0);
-        
-        const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999);
-        
-        const startISO = startDate.toISOString();
-        const endISO = endDate.toISOString();
-        
-        // Get all trips for the date
+        // Query trips using SQLite's DATE() function to match by date only
         const trips = await dbAll(
             `SELECT * FROM trips 
-             WHERE departure_time >= ? AND departure_time <= ?
+             WHERE DATE(departure_time) = ?
              ORDER BY rider_id, departure_time ASC`,
-            [startISO, endISO]
+            [date]
         );
+        
+        console.log(`Found ${trips.length} trips for ${date}`);
         
         // Get manual attendance records
         const attendanceRecords = await dbAll(
