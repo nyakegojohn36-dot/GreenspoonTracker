@@ -539,26 +539,41 @@
             }
             
             .navbar-brand {
-                font-size: 0.85rem;
-                flex: 1;
+                font-size: 0.75rem;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                width: 100%;
             }
             
             .navbar-brand span {
                 white-space: nowrap;
             }
             
+            .navbar-brand .brand-full {
+                display: none; /* Hide "Greenspoon" text on mobile */
+            }
+            
             .navbar-brand img {
-                width: 28px;
-                height: 28px;
-                margin-right: 3px;
+                height: 60px;
+                width: auto;
+                margin-right: 0;
+                margin-bottom: 5px;
             }
             
             .navbar-brand .badge {
                 display: none; /* Hide version badge on mobile to save space */
             }
             
+            .navbar .container {
+                justify-content: center;
+            }
+            
             #currentDateTime {
-                font-size: 0.7rem;
+                font-size: 0.65rem;
+                position: absolute;
+                top: 5px;
+                right: 10px;
             }
             
             .nav-tabs {
