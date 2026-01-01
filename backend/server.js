@@ -400,6 +400,45 @@ app.patch('/api/boxes/:box_number/status', async (req, res) => {
     }
 });
 
+// Delete a box
+app.delete('/api/boxes/:box_number', async (req, res) => {
+    try {
+        const boxNumber = req.params.box_number;
+        
+        // Check if box exists
+        const box = await dbGet('SELECT * FROM boxes WHERE box_number = ?', [boxNumber]);
+        if (!box) {
+            return res.status(404).json({
+                success: false,
+                error: 'Box not found'
+            });
+        }
+        
+        // Don't allow deletion if box is in transit
+        if (box.status === 'in_transit') {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot delete box that is currently in transit'
+            });
+        }
+        
+        const result = await dbRun(
+            'DELETE FROM boxes WHERE box_number = ?',
+            [boxNumber]
+        );
+        
+        res.json({
+            success: true,
+            message: `Box ${boxNumber} deleted successfully`
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Get all riders
 app.get('/api/riders', async (req, res) => {
     try {
