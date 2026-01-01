@@ -2200,19 +2200,11 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('✅ Backend connection successful:', data);
-                    // Hide offline banner if it was showing
-                    document.getElementById('offlineAlert').style.display = 'none';
                 })
                 .catch(error => {
                     console.error('❌ Backend connection failed:', error);
-                    // Only show banner and error if truly offline
-                    if (!navigator.onLine) {
-                        document.getElementById('offlineAlert').style.display = 'flex';
-                        showToast('⚠️ No internet connection', 'danger');
-                    } else {
-                        // Connected to internet but can't reach server
-                        showToast('⚠️ Cannot connect to server. Please try again.', 'warning');
-                    }
+                    // Don't show banner here - let offline event handler deal with it
+                    // Just log the error for debugging
                 });
         }
 
