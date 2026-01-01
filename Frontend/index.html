@@ -600,36 +600,36 @@
             
             /* Professional Mobile Tabs - 2x2 Grid with Horizontal Scroll */
             .nav-tabs {
-                display: flex;
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(2, 40px);
+                grid-auto-flow: column;
+                grid-auto-columns: 50%;
                 overflow-x: auto;
                 overflow-y: hidden;
                 -webkit-overflow-scrolling: touch;
-                scrollbar-width: thin;
+                scroll-snap-type: x mandatory;
                 background: white;
                 border-radius: 15px 15px 0 0;
-                padding: 6px 6px 0 6px;
+                padding: 6px;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                 margin-bottom: 0;
-                height: 90px;
-                align-content: flex-start;
+                gap: 4px;
             }
             
             .nav-tabs .nav-link {
-                padding: 12px 10px;
+                padding: 0;
                 font-size: 0.85rem;
-                margin-right: 4px;
-                margin-bottom: 4px;
+                margin: 0;
                 white-space: nowrap;
-                flex: 0 0 calc(50% - 6px);
                 border-radius: 8px 8px 0 0;
                 font-weight: 600;
                 transition: all 0.3s ease;
                 text-align: center;
-                height: 40px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                scroll-snap-align: start;
             }
             
             .nav-tabs .nav-link i {
@@ -643,20 +643,20 @@
             
             /* Professional Dashboard Cards - Ultra Compact 2x2 Grid */
             .row.g-4.mb-4 {
-                margin-bottom: 0.5rem !important;
+                margin-bottom: 0.4rem !important;
             }
             
             .row.g-4.mb-4 > .col-md-3 {
                 flex: 0 0 50%;
                 max-width: 50%;
-                padding: 0 4px !important;
-                margin-bottom: 5px;
+                padding: 0 3px !important;
+                margin-bottom: 4px;
             }
             
             .dashboard-card {
                 margin-bottom: 0;
-                border-radius: 10px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                border-radius: 8px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.08);
             }
             
             .dashboard-card:active {
@@ -664,32 +664,32 @@
             }
             
             .dashboard-card .card-body {
-                padding: 8px 4px !important;
+                padding: 6px 4px !important;
             }
             
             .card-icon {
-                width: 28px;
-                height: 28px;
-                margin-bottom: 3px;
+                width: 24px;
+                height: 24px;
+                margin-bottom: 2px;
             }
             
             .card-icon i {
-                font-size: 0.9rem;
+                font-size: 0.8rem;
             }
             
             .dashboard-card h2 {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
                 font-weight: 700;
                 margin-bottom: 1px;
             }
             
             .dashboard-card p {
-                font-size: 0.65rem;
-                margin-bottom: 1px;
+                font-size: 0.6rem;
+                margin-bottom: 0;
             }
             
             .dashboard-card small {
-                font-size: 0.55rem;
+                font-size: 0.5rem;
             }
             
             /* Enhanced Tab Content - Allow Horizontal Scroll */
