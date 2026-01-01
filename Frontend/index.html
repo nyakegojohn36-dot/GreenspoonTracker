@@ -542,8 +542,28 @@
             
             /* Enhanced Mobile Navbar */
             .navbar-greenspoon {
-                padding: 1.25rem 0;
+                padding: 0.75rem 0 1rem 0;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            }
+            
+            .navbar .container {
+                flex-direction: column;
+                position: relative;
+            }
+            
+            #currentDateTime {
+                font-size: 0.75rem;
+                position: relative;
+                top: 0;
+                right: 0;
+                background: rgba(255,255,255,0.25);
+                padding: 6px 14px;
+                border-radius: 10px;
+                backdrop-filter: blur(8px);
+                font-weight: 600;
+                margin-bottom: 12px;
+                text-align: center;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             }
             
             .navbar-brand {
@@ -554,6 +574,7 @@
                 width: 100%;
                 font-weight: 600;
                 letter-spacing: 0.5px;
+                order: 2;
             }
             
             .navbar-brand span {
@@ -566,7 +587,7 @@
             }
             
             .navbar-brand img {
-                height: 70px;
+                height: 65px;
                 width: auto;
                 margin-right: 0;
                 margin-bottom: 0;
@@ -577,57 +598,89 @@
                 display: none;
             }
             
-            .navbar .container {
-                justify-content: center;
-                position: relative;
-            }
-            
-            #currentDateTime {
-                font-size: 0.7rem;
-                position: absolute;
-                top: 8px;
-                right: 12px;
-                background: rgba(255,255,255,0.2);
-                padding: 4px 8px;
-                border-radius: 8px;
-                backdrop-filter: blur(5px);
-            }
-            
-            /* Professional Mobile Tabs */
+            /* Professional Mobile Tabs - All Visible */
             .nav-tabs {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
+                flex-wrap: wrap;
+                overflow-x: visible;
                 background: white;
                 border-radius: 15px 15px 0 0;
-                padding: 8px 8px 0 8px;
+                padding: 6px 6px 0 6px;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                 margin-bottom: 0;
-            }
-            
-            .nav-tabs::-webkit-scrollbar {
-                display: none;
+                justify-content: center;
             }
             
             .nav-tabs .nav-link {
-                padding: 14px 20px;
-                font-size: 0.9rem;
-                margin-right: 6px;
+                padding: 10px 8px;
+                font-size: 0.7rem;
+                margin-right: 3px;
+                margin-bottom: 3px;
                 white-space: nowrap;
-                flex-shrink: 0;
-                border-radius: 10px 10px 0 0;
+                flex: 0 1 auto;
+                border-radius: 8px 8px 0 0;
                 font-weight: 600;
                 transition: all 0.3s ease;
+                min-width: 0;
             }
             
             .nav-tabs .nav-link i {
-                font-size: 1rem;
-                margin-right: 6px;
+                font-size: 0.85rem;
+                margin-right: 3px;
             }
             
             .nav-tabs .nav-link.active {
                 box-shadow: 0 -2px 8px rgba(46, 125, 50, 0.2);
+            }
+            
+            /* Professional Dashboard Cards - Compact 2x2 Grid */
+            .row.g-4.mb-4 {
+                margin-bottom: 1rem !important;
+            }
+            
+            .row.g-4.mb-4 > .col-md-3 {
+                flex: 0 0 50%;
+                max-width: 50%;
+                padding: 0 6px !important;
+                margin-bottom: 12px;
+            }
+            
+            .dashboard-card {
+                margin-bottom: 0;
+                border-radius: 12px;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            }
+            
+            .dashboard-card:active {
+                transform: scale(0.98);
+            }
+            
+            .dashboard-card .card-body {
+                padding: 16px 10px !important;
+            }
+            
+            .card-icon {
+                width: 45px;
+                height: 45px;
+                margin-bottom: 8px;
+            }
+            
+            .card-icon i {
+                font-size: 1.3rem;
+            }
+            
+            .dashboard-card h2 {
+                font-size: 1.6rem;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+            
+            .dashboard-card p {
+                font-size: 0.8rem;
+                margin-bottom: 4px;
+            }
+            
+            .dashboard-card small {
+                font-size: 0.7rem;
             }
             
             /* Enhanced Tab Content */
