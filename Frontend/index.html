@@ -529,58 +529,81 @@
         
         /* Enhanced Responsive Design */
         @media (max-width: 768px) {
+            /* Professional Mobile Layout */
             body {
-                padding-bottom: 20px;
+                padding-bottom: 30px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             }
             
             .container {
-                padding-left: 10px;
-                padding-right: 10px;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            /* Enhanced Mobile Navbar */
+            .navbar-greenspoon {
+                padding: 1.25rem 0;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             }
             
             .navbar-brand {
-                font-size: 0.75rem;
+                font-size: 0.85rem;
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
                 width: 100%;
+                font-weight: 600;
+                letter-spacing: 0.5px;
             }
             
             .navbar-brand span {
                 white-space: nowrap;
+                margin-top: 8px;
             }
             
             .navbar-brand .brand-full {
-                display: none; /* Hide "Greenspoon" text on mobile */
+                display: none;
             }
             
             .navbar-brand img {
-                height: 60px;
+                height: 70px;
                 width: auto;
                 margin-right: 0;
-                margin-bottom: 5px;
+                margin-bottom: 0;
+                filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25));
             }
             
             .navbar-brand .badge {
-                display: none; /* Hide version badge on mobile to save space */
+                display: none;
             }
             
             .navbar .container {
                 justify-content: center;
+                position: relative;
             }
             
             #currentDateTime {
-                font-size: 0.65rem;
+                font-size: 0.7rem;
                 position: absolute;
-                top: 5px;
-                right: 10px;
+                top: 8px;
+                right: 12px;
+                background: rgba(255,255,255,0.2);
+                padding: 4px 8px;
+                border-radius: 8px;
+                backdrop-filter: blur(5px);
             }
             
+            /* Professional Mobile Tabs */
             .nav-tabs {
                 flex-wrap: nowrap;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
+                background: white;
+                border-radius: 15px 15px 0 0;
+                padding: 8px 8px 0 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                margin-bottom: 0;
             }
             
             .nav-tabs::-webkit-scrollbar {
@@ -588,50 +611,163 @@
             }
             
             .nav-tabs .nav-link {
-                padding: 12px 18px;
-                font-size: 0.85rem;
-                margin-right: 4px;
+                padding: 14px 20px;
+                font-size: 0.9rem;
+                margin-right: 6px;
                 white-space: nowrap;
                 flex-shrink: 0;
+                border-radius: 10px 10px 0 0;
+                font-weight: 600;
+                transition: all 0.3s ease;
             }
             
+            .nav-tabs .nav-link i {
+                font-size: 1rem;
+                margin-right: 6px;
+            }
+            
+            .nav-tabs .nav-link.active {
+                box-shadow: 0 -2px 8px rgba(46, 125, 50, 0.2);
+            }
+            
+            /* Enhanced Tab Content */
             .tab-content {
-                padding: 15px;
+                padding: 20px 15px;
                 border-radius: 0 0 20px 20px;
+                background: white;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+                min-height: 450px;
             }
             
+            /* Professional Dashboard Cards */
             .dashboard-card {
-                margin-bottom: 15px;
+                margin-bottom: 20px;
+                border-radius: 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             }
             
+            .dashboard-card:active {
+                transform: scale(0.98);
+            }
+            
+            .card-icon {
+                width: 65px;
+                height: 65px;
+                margin-bottom: 12px;
+            }
+            
+            .dashboard-card h2 {
+                font-size: 2rem;
+                font-weight: 700;
+            }
+            
+            .dashboard-card p {
+                font-size: 0.9rem;
+            }
+            
+            /* Professional Scanner Container */
             .scanner-container {
-                padding: 15px;
+                padding: 20px;
+                border-radius: 16px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            }
+            
+            .scanner-container h4 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
             }
             
             #qr-reader, #return-qr-reader, #box-qr-reader {
                 width: 100% !important;
                 max-width: 100% !important;
+                border-radius: 12px;
+                overflow: hidden;
             }
             
-            /* Daily Report Styles */
+            /* Enhanced Mobile Buttons */
+            .btn-greenspoon, .btn-outline-greenspoon {
+                padding: 14px 24px;
+                font-size: 1rem;
+                width: 100%;
+                margin-bottom: 12px;
+                border-radius: 12px;
+                font-weight: 600;
+                box-shadow: 0 3px 10px rgba(46, 125, 50, 0.25);
+                transition: all 0.3s ease;
+            }
+            
+            .btn-greenspoon:active {
+                transform: scale(0.97);
+            }
+            
+            /* Professional Form Elements */
+            .form-control, .form-select {
+                font-size: 16px;
+                padding: 14px 16px;
+                border-radius: 12px;
+                border: 2px solid #e0e0e0;
+                transition: all 0.3s ease;
+            }
+            
+            .form-control:focus, .form-select:focus {
+                border-color: var(--light-green);
+                box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+            }
+            
+            .form-label {
+                font-size: 0.95rem;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: var(--dark-green);
+            }
+            
+            /* Enhanced Tables for Mobile */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            
+            table {
+                min-width: 600px;
+                font-size: 0.9rem;
+            }
+            
+            .table thead th {
+                font-size: 0.85rem;
+                padding: 14px 10px;
+                position: sticky;
+                top: 0;
+                background: var(--primary-green);
+                z-index: 10;
+            }
+            
+            .table tbody td {
+                padding: 12px 10px;
+            }
+            
+            /* Professional Report Styles */
             .report-content {
                 font-family: 'Courier New', monospace;
                 white-space: pre-wrap;
                 background: #f8f9fa;
                 padding: 20px;
-                border-radius: 8px;
-                font-size: 14px;
+                border-radius: 12px;
+                font-size: 13px;
                 line-height: 1.8;
                 max-height: 70vh;
                 overflow-y: auto;
+                box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
             }
             
             .report-header {
                 font-weight: bold;
-                font-size: 18px;
+                font-size: 17px;
                 text-align: center;
                 margin-bottom: 20px;
                 text-decoration: underline;
+                color: var(--dark-green);
             }
             
             .report-section {
@@ -643,28 +779,103 @@
                 padding-left: 20px;
             }
             
-            .btn-greenspoon, .btn-outline-greenspoon {
-                padding: 10px 20px;
-                font-size: 0.9rem;
-                width: 100%;
-                margin-bottom: 10px;
-            }
-            
-            .table-responsive {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            table {
-                min-width: 600px;
-            }
-            
-            .form-control, .form-select {
-                font-size: 16px; /* Prevents zoom on iOS */
-            }
-            
+            /* Enhanced Modals */
             .modal-dialog {
-                margin: 10px;
+                margin: 15px;
+            }
+            
+            .modal-content {
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            
+            .modal-header {
+                padding: 20px;
+                border-radius: 20px 20px 0 0;
+            }
+            
+            .modal-body {
+                padding: 20px;
+            }
+            
+            /* Enhanced Alerts */
+            .alert {
+                border-radius: 12px;
+                padding: 14px 16px;
+                font-size: 0.95rem;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            
+            /* Professional Card Elements */
+            .card {
+                border-radius: 16px;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+                margin-bottom: 20px;
+            }
+            
+            .card-header {
+                border-radius: 16px 16px 0 0 !important;
+                padding: 16px 20px;
+                font-size: 1.05rem;
+            }
+            
+            .card-body {
+                padding: 18px;
+            }
+            
+            /* Enhanced Badges */
+            .badge {
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+            
+            /* Professional Workflow Steps */
+            .workflow-step {
+                border-radius: 14px;
+                padding: 18px;
+                margin-bottom: 18px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            
+            .step-number {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+            
+            /* Enhanced Box/Return Items */
+            .box-list-item, .return-box-item {
+                padding: 14px 16px;
+                border-radius: 12px;
+                margin-bottom: 10px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+                border: 1px solid #e8e8e8;
+            }
+            
+            /* Professional Input Groups */
+            .input-group {
+                border-radius: 12px;
+                overflow: hidden;
+            }
+            
+            .input-group .form-control {
+                border-radius: 12px 0 0 12px;
+            }
+            
+            .input-group .btn {
+                border-radius: 0 12px 12px 0;
+            }
+            
+            /* Smooth Scrolling */
+            * {
+                -webkit-tap-highlight-color: rgba(46, 125, 50, 0.1);
+            }
+            
+            /* Professional Touch Feedback */
+            button:active, .btn:active, .nav-link:active {
+                transform: scale(0.98);
             }
         }
         
