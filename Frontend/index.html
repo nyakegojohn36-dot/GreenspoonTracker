@@ -816,7 +816,7 @@
         </div>
 
         <!-- Offline Status Banner -->
-        <div id="offlineAlert" class="alert alert-danger d-flex align-items-center justify-content-center" style="display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 9999; margin: 0; border-radius: 0;">
+        <div id="offlineAlert" class="alert alert-danger d-flex align-items-center justify-content-center" style="display: none !important; position: fixed; top: 0; left: 0; right: 0; z-index: 9999; margin: 0; border-radius: 0;">
             <i class="fas fa-wifi-slash me-2"></i>
             <strong>No Internet Connection</strong>
             <span class="ms-2">- Please check your network</span>
@@ -2026,14 +2026,14 @@
 
         // Show offline/online status
         window.addEventListener('online', () => {
-            document.getElementById('offlineAlert').style.display = 'none';
+            document.getElementById('offlineAlert').style.setProperty('display', 'none', 'important');
             showToast('✅ Internet connection restored!', 'success');
             console.log('📶 Back online');
             loadAllData(); // Reload data when back online
         });
 
         window.addEventListener('offline', () => {
-            document.getElementById('offlineAlert').style.display = 'flex';
+            document.getElementById('offlineAlert').style.setProperty('display', 'flex', 'important');
             showToast('⚠️ No internet connection', 'danger');
             console.log('📵 Offline mode');
         });
@@ -2082,6 +2082,10 @@
             // Set up event listeners
             setupEventListeners();
             
+            // Ensure banner is hidden on page load if online
+            if (navigator.onLine) {
+                document.getElementById('offlineAlert').style.setProperty('display', 'none', 'important');
+            }
             
             // Test backend connection
             testBackendConnection();
@@ -2200,6 +2204,8 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('✅ Backend connection successful:', data);
+                    // Hide offline banner if connected
+                    document.getElementById('offlineAlert').style.setProperty('display', 'none', 'important');
                 })
                 .catch(error => {
                     console.error('❌ Backend connection failed:', error);
@@ -2262,6 +2268,9 @@
                 console.log(`   - ${currentBoxes.length} boxes`);
                 console.log(`   - ${currentRiders.length} riders`);
                 console.log(`   - ${currentTrips.length} trips`);
+                
+                // Hide offline banner since we successfully loaded data
+                document.getElementById('offlineAlert').style.setProperty('display', 'none', 'important');
             })
             .catch(error => {
                 console.error('❌ Error loading data:', error);
