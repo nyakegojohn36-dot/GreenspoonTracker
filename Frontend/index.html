@@ -1308,6 +1308,21 @@
                     </button>
                 </div>
                 
+                <!-- Search Bar -->
+                <div class="mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control" id="riderSearchInput" 
+                               placeholder="Search by name, ID, phone, or number plate..." 
+                               onkeyup="searchRiders()">
+                        <button class="btn btn-outline-secondary" onclick="clearRiderSearch()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="ridersGrid">
                     <!-- Riders loaded dynamically -->
                 </div>
@@ -2268,6 +2283,9 @@
                 console.log(`   - ${currentBoxes.length} boxes`);
                 console.log(`   - ${currentRiders.length} riders`);
                 console.log(`   - ${currentTrips.length} trips`);
+                
+                // Update attendance dropdown with current riders
+                populateAttendanceRiderDropdown();
                 
                 // Hide offline banner since we successfully loaded data
                 document.getElementById('offlineAlert').style.setProperty('display', 'none', 'important');
@@ -4196,22 +4214,96 @@
         }
         
         function populateAttendanceRiderDropdown() {
-            fetch(`${API_BASE_URL}/api/riders`)
-                .then(response => response.json())
-                .then(data => {
-                    const select = document.getElementById('attendanceRiderId');
-                    select.innerHTML = '<option value="">-- Select Rider --</option>';
-                    
-                    if (data.riders && data.riders.length > 0) {
-                        data.riders.forEach(rider => {
-                            const option = document.createElement('option');
-                            option.value = rider.rider_id;
-                            option.textContent = rider.name;
-                            select.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error loading riders:', error));
+            const select = document.getElementById('attendanceRiderId');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">-- Select Rider --</option>';
+            
+            if (currentRiders && currentRiders.length > 0) {
+                currentRiders.forEach(rider => {
+                    const option = document.createElement('option');
+                    option.value = rider.rider_id;
+                    option.textContent = `${rider.name} (${rider.rider_id})`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // Search riders function
+        function searchRiders() {
+            const searchInput = document.getElementById('riderSearchInput');
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                updateRidersGrid();
+                return;
+            }
+            
+            const filteredRiders = currentRiders.filter(rider => {
+                return (
+                    rider.name.toLowerCase().includes(searchTerm) ||
+                    rider.rider_id.toLowerCase().includes(searchTerm) ||
+                    (rider.phone && rider.phone.toLowerCase().includes(searchTerm)) ||
+                    (rider.number_plate && rider.number_plate.toLowerCase().includes(searchTerm))
+                );
+            });
+            
+            displayFilteredRiders(filteredRiders);
+        }
+
+        function clearRiderSearch() {
+            document.getElementById('riderSearchInput').value = '';
+            updateRidersGrid();
+        }
+
+        function displayFilteredRiders(riders) {
+            const grid = document.getElementById('ridersGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            if (riders.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-light border text-center py-4">
+                            <i class="fas fa-search fa-2x mb-2 text-muted"></i>
+                            <p class="mb-0">No riders found matching your search.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            riders.forEach(rider => {
+                const col = document.createElement('div');
+                col.className = 'col';
+                col.innerHTML = `
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="mb-3 text-center">
+                                <i class="fas fa-user-circle fa-3x text-success"></i>
+                            </div>
+                            <h5 class="card-title text-center">${rider.name}</h5>
+                            <p class="text-muted text-center mb-2"><small>${rider.rider_id}</small></p>
+                            <hr class="my-2">
+                            <div class="small">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-phone text-success me-2" style="width: 16px;"></i>
+                                    <span>${rider.phone || 'N/A'}</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-motorcycle text-success me-2" style="width: 16px;"></i>
+                                    <span>${rider.number_plate || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger btn-sm w-100 mt-2" onclick="deleteRider('${rider.rider_id}', '${rider.name}')">
+                                <i class="fas fa-trash me-1"></i>Delete Rider
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
         }
 
         // ============= ARCHIVED REPORTS FUNCTIONS =============
