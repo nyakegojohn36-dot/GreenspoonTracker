@@ -2082,11 +2082,6 @@
             // Set up event listeners
             setupEventListeners();
             
-            // Check if offline on load
-            if (!navigator.onLine) {
-                document.getElementById('offlineAlert').style.display = 'flex';
-                showToast('⚠️ No internet connection detected', 'danger');
-            }
             
             // Test backend connection
             testBackendConnection();
@@ -2205,10 +2200,19 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('✅ Backend connection successful:', data);
+                    // Hide offline banner if it was showing
+                    document.getElementById('offlineAlert').style.display = 'none';
                 })
                 .catch(error => {
                     console.error('❌ Backend connection failed:', error);
-                    showToast(getErrorMessage(error), 'danger');
+                    // Only show banner and error if truly offline
+                    if (!navigator.onLine) {
+                        document.getElementById('offlineAlert').style.display = 'flex';
+                        showToast('⚠️ No internet connection', 'danger');
+                    } else {
+                        // Connected to internet but can't reach server
+                        showToast('⚠️ Cannot connect to server. Please try again.', 'warning');
+                    }
                 });
         }
 
