@@ -869,8 +869,8 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button">
-                    <i class="fas fa-chart-bar me-2"></i>Analytics
+                <button class="nav-link" id="battery-tab" data-bs-toggle="tab" data-bs-target="#battery" type="button">
+                    <i class="fas fa-car-battery me-2"></i>Battery Management
                 </button>
             </li>
         </ul>
@@ -1553,35 +1553,239 @@
                 </div>
             </div>
 
-            <!-- Analytics Tab -->
-            <div class="tab-pane fade" id="analytics" role="tabpanel">{
+            <!-- Battery Management Tab -->
+            <div class="tab-pane fade" id="battery" role="tabpanel">
                 <div class="row g-4">
-                    <div class="col-lg-8">
-                        <div class="scanner-container">
-                            <h4 class="mb-4">
-                                <i class="fas fa-chart-bar me-2 text-success"></i>Box Status Distribution
-                            </h4>
-                            <canvas id="statusChart" height="250"></canvas>
+                    <!-- Battery Statistics Cards -->
+                    <div class="col-lg-12">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="dashboard-card text-center p-3">
+                                    <i class="fas fa-car-battery text-primary fa-2x mb-2"></i>
+                                    <h3 class="mb-1" id="totalBatteriesCount">0</h3>
+                                    <p class="text-muted mb-0">Total Batteries</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="dashboard-card text-center p-3">
+                                    <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                    <h3 class="mb-1" id="availableBatteriesCount">0</h3>
+                                    <p class="text-muted mb-0">Available</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="dashboard-card text-center p-3">
+                                    <i class="fas fa-motorcycle text-warning fa-2x mb-2"></i>
+                                    <h3 class="mb-1" id="inUseBatteriesCount">0</h3>
+                                    <p class="text-muted mb-0">In Use</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="dashboard-card text-center p-3">
+                                    <i class="fas fa-exclamation-triangle text-danger fa-2x mb-2"></i>
+                                    <h3 class="mb-1" id="overdueBatteriesCount">0</h3>
+                                    <p class="text-muted mb-0">Overdue</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-lg-4">
-                        <div class="scanner-container h-100">
+
+                    <!-- Issue Battery Section -->
+                    <div class="col-lg-6">
+                        <div class="scanner-container">
                             <h4 class="mb-4">
-                                <i class="fas fa-info-circle me-2 text-success"></i>Quick Stats
+                                <i class="fas fa-sign-out-alt me-2 text-primary"></i>Issue Battery
                             </h4>
-                            <div class="list-group">
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    Available Boxes
-                                    <span class="badge bg-success rounded-pill" id="quickAvailableBoxes">0</span>
+                            
+                            <!-- Rider Selection -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Select Rider</label>
+                                <select class="form-select" id="batteryRiderSelect">
+                                    <option value="">-- Select Rider --</option>
+                                </select>
+                            </div>
+
+                            <!-- Vehicle Registration -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Vehicle Number Plate</label>
+                                <select class="form-select" id="batteryVehicleReg">
+                                    <option value="">-- Select Number Plate --</option>
+                                </select>
+                                <small class="text-muted">Select from registered number plates</small>
+                            </div>
+
+                            <!-- Battery Selection via QR -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Scan Battery QR Code</label>
+                                <button type="button" class="btn btn-primary w-100 mb-2" onclick="startBatteryIssueScanner()">
+                                    <i class="fas fa-camera me-2"></i><span id="batteryIssueScannerText">Start Scanner</span>
+                                </button>
+                                <div id="batteryIssueQrReader" style="display: none; width: 100%;"></div>
+                            </div>
+
+                            <!-- Manual Battery Input -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Or Enter Battery Number</label>
+                                <input type="text" class="form-control" id="batteryNumberInput" placeholder="BAT-001">
+                            </div>
+
+                            <!-- Vehicle Type -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Vehicle Type</label>
+                                <select class="form-select" id="batteryVehicleType">
+                                    <option value="motorcycle">Motorcycle</option>
+                                    <option value="vehicle">Vehicle</option>
+                                </select>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Notes</label>
+                                <textarea class="form-control" id="batteryIssueNotes" rows="2" placeholder="Any additional notes..."></textarea>
+                            </div>
+
+                            <button class="btn btn-success w-100" onclick="issueBattery()">
+                                <i class="fas fa-check me-2"></i>Issue Battery
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Return Battery Section -->
+                    <div class="col-lg-6">
+                        <div class="scanner-container">
+                            <h4 class="mb-4">
+                                <i class="fas fa-sign-in-alt me-2 text-success"></i>Return Battery
+                            </h4>
+                            
+                            <!-- Active Assignments List -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Active Battery Assignments</label>
+                                <div id="activeBatteryAssignmentsList" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-battery-empty fa-2x mb-2"></i>
+                                        <p>No active battery assignments</p>
+                                    </div>
                                 </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    In Transit
-                                    <span class="badge bg-warning rounded-pill" id="quickInTransitBoxes">0</span>
+                            </div>
+
+                            <!-- OR scan to return -->
+                            <div class="text-center my-3">
+                                <span class="badge bg-secondary">OR</span>
+                            </div>
+
+                            <!-- Battery Return via QR -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Scan Battery to Return</label>
+                                <button type="button" class="btn btn-success w-100" onclick="startBatteryReturnScanner()">
+                                    <i class="fas fa-camera me-2"></i><span id="batteryReturnScannerText">Start Scanner</span>
+                                </button>
+                                <div id="batteryReturnQrReader" style="display: none; width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Battery Inventory Section -->
+                    <div class="col-lg-12">
+                        <div class="scanner-container">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-list me-2 text-info"></i>Battery Inventory
+                                </h4>
+                                <div>
+                                    <button class="btn btn-primary btn-sm" onclick="showAddBatteryModal()">
+                                        <i class="fas fa-plus me-1"></i>Add Battery
+                                    </button>
+                                    <button class="btn btn-info btn-sm ms-2" onclick="refreshBatteryData()">
+                                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                                    </button>
                                 </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    Total Riders
-                                    <span class="badge bg-primary rounded-pill" id="quickActiveRiders">0</span>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Battery #</th>
+                                            <th>Vehicle Type</th>
+                                            <th>Registration</th>
+                                            <th>Status</th>
+                                            <th>Times Used</th>
+                                            <th>Current Rider</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="batteryInventoryTable">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                <i class="fas fa-battery-quarter fa-2x mb-2"></i>
+                                                <p>No batteries registered yet</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Battery Usage Statistics -->
+                    <div class="col-lg-12">
+                        <div class="scanner-container">
+                            <h4 class="mb-4">
+                                <i class="fas fa-chart-line me-2 text-success"></i>Battery Usage Statistics
+                            </h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Most Used Batteries</h6>
+                                    <div id="mostUsedBatteriesList">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-battery-half fa-2x mb-2"></i>
+                                            <p>No usage data yet</p>
+                                        </div>
+                                    </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Recent Battery Activity</h6>
+                                    <div id="recentBatteryActivityList">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-clock fa-2x mb-2"></i>
+                                            <p>No recent activity</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Battery Assignment History -->
+                    <div class="col-lg-12">
+                        <div class="scanner-container">
+                            <h4 class="mb-4">
+                                <i class="fas fa-history me-2 text-secondary"></i>Assignment History
+                            </h4>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Assignment ID</th>
+                                            <th>Battery</th>
+                                            <th>Rider</th>
+                                            <th>Vehicle</th>
+                                            <th>Issue Time</th>
+                                            <th>Return Time</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="batteryHistoryTable">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                                <p>No assignment history yet</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -1691,6 +1895,45 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-success" onclick="saveNewRider()">
                         <i class="fas fa-save me-1"></i>Save Rider
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Battery Modal -->
+    <div class="modal fade" id="addBatteryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-car-battery me-2"></i>Add New Battery
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Battery Number *</label>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" id="newBatteryNumber" placeholder="BAT-001 or scan QR" required>
+                            <button type="button" class="btn btn-outline-primary" onclick="startAddBatteryScanner()">
+                                <i class="fas fa-qrcode me-1"></i><span id="addBatteryScannerText">Scan QR</span>
+                            </button>
+                        </div>
+                        <div id="addBatteryQrReader" style="display: none; margin-bottom: 15px;"></div>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label class="form-label">Vehicle Type *</label>
+                        <select class="form-select" id="newBatteryVehicleType" required>
+                            <option value="motorcycle">Motorcycle</option>
+                            <option value="vehicle">Vehicle</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveNewBattery()">
+                        <i class="fas fa-save me-1"></i>Save Battery
                     </button>
                 </div>
             </div>
@@ -1899,8 +2142,6 @@
                         loadTrips();
                     } else if (tabId === 'return') {
                         loadReturnBoxes();
-                    } else if (tabId === 'analytics') {
-                        loadAnalytics();
                     }
                 });
             });
@@ -2028,11 +2269,6 @@
             document.getElementById('availableBoxes').textContent = stats.available_boxes || 0;
             document.getElementById('totalRiders').textContent = stats.total_riders || 0;
             document.getElementById('activeTrips').textContent = stats.active_trips || 0;
-            
-            // Update quick stats
-            document.getElementById('quickAvailableBoxes').textContent = stats.available_boxes || 0;
-            document.getElementById('quickInTransitBoxes').textContent = stats.in_transit_boxes || 0;
-            document.getElementById('quickActiveRiders').textContent = stats.total_riders || 0;
         }
 
         function updateBoxesTable() {
@@ -2121,11 +2357,14 @@
                                     <i class="fas fa-phone text-success me-2" style="width: 16px;"></i>
                                     <span>${rider.phone || 'N/A'}</span>
                                 </div>
-                                <div class="d-flex align-items-center">
+                                <div class="d-flex align-items-center mb-2">
                                     <i class="fas fa-motorcycle text-success me-2" style="width: 16px;"></i>
                                     <span>${rider.number_plate || 'N/A'}</span>
                                 </div>
                             </div>
+                            <button class="btn btn-danger btn-sm w-100 mt-2" onclick="deleteRider('${rider.rider_id}', '${rider.name}')">
+                                <i class="fas fa-trash me-1"></i>Delete Rider
+                            </button>
                         </div>
                     </div>
                 `;
@@ -2393,10 +2632,10 @@
                     console.log('✅ QR Code scanned:', decodedText);
                     showToast('✅ Scanned: ' + decodedText, 'success');
                     document.getElementById('tripBoxInput').value = decodedText;
-                    addBoxToTrip();
                     // Play success sound or vibrate
                     if (navigator.vibrate) navigator.vibrate(200);
                     playSuccessBeep();
+                    addBoxToTrip();
                 },
                 (errorMessage) => {
                     // Scanning errors are normal, ignore them
@@ -2790,8 +3029,8 @@
                 (decodedText) => {
                     console.log('Return QR scanned:', decodedText);
                     showToast('✅ Scanned: ' + decodedText, 'success');
-                    processReturnBox(decodedText);
                     playSuccessBeep();
+                    processReturnBox(decodedText);
                 },
                 (error) => {
                     // Ignore scan errors (happens continuously)
@@ -2869,7 +3108,6 @@
             .then(data => {
                 if (data.success) {
                     showToast(`Box ${boxNumber} returned as ${condition}`, 'success');
-                    playSuccessBeep(); // Play beep on successful return
                     
                     // Reload data
                     setTimeout(() => {
@@ -3197,6 +3435,29 @@
             modal.show();
         }
 
+        function deleteRider(riderId, riderName) {
+            if (!confirm(`Are you sure you want to delete rider "${riderName}" (${riderId})?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+
+            fetch(`${API_BASE_URL}/api/riders/${riderId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Rider ${riderName} deleted successfully!`, 'success');
+                    setTimeout(() => loadAllData(), 500);
+                } else {
+                    showToast('Failed to delete rider: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting rider:', error);
+                showToast('Error deleting rider', 'danger');
+            });
+        }
+
         function saveNewRider() {
             const riderId = document.getElementById('newRiderId').value.trim();
             const name = document.getElementById('newRiderName').value.trim();
@@ -3475,63 +3736,6 @@
         function refreshTrips() {
             loadTrips();
             showToast('Trips refreshed', 'info');
-        }
-
-        // Analytics Functions
-        function loadAnalytics() {
-            // Load status distribution
-            fetch(`${API_BASE_URL}/api/stats/status-distribution`)
-                .then(response => response.json())
-                .then(data => {
-                    renderStatusChart(data);
-                })
-                .catch(error => {
-                    console.error('Error loading analytics:', error);
-                });
-        }
-
-        function renderStatusChart(data) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            
-            // Destroy existing chart if it exists
-            if (window.statusChartInstance) {
-                window.statusChartInstance.destroy();
-            }
-            
-            const labels = Object.keys(data).filter(key => data[key] > 0);
-            const values = labels.map(key => data[key]);
-            
-            window.statusChartInstance = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1).replace('_', ' ')),
-                    datasets: [{
-                        data: values,
-                        backgroundColor: [
-                            '#2ecc71', // available - green
-                            '#f39c12', // in_transit - orange
-                            '#3498db', // delivered - blue
-                            '#9b59b6', // returned - purple
-                            '#e74c3c', // lost - red
-                            '#34495e'  // damaged - dark
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Box Status Distribution'
-                        }
-                    }
-                }
-            });
         }
 
         // ============= REPORTS FUNCTIONS =============
@@ -4057,6 +4261,683 @@
                 });
         }
 
+        // ============= BATTERY MANAGEMENT FUNCTIONS =============
+        let batteryIssueScanner = null;
+        let batteryReturnScanner = null;
+        let addBatteryScanner = null;
+        let batteryIssueScannerActive = false;
+        let batteryReturnScannerActive = false;
+        let addBatteryScannerActive = false;
+        let currentBatteries = [];
+        let currentBatteryAssignments = [];
+
+        function loadBatteryData() {
+            // Load batteries
+            fetch(`${API_BASE_URL}/api/batteries`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentBatteries = data.batteries;
+                        updateBatteryInventory();
+                    }
+                })
+                .catch(error => console.error('Error loading batteries:', error));
+
+            // Load assignments
+            fetch(`${API_BASE_URL}/api/battery-assignments`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentBatteryAssignments = data.assignments;
+                        updateBatteryHistory();
+                        updateActiveBatteryAssignments();
+                    }
+                })
+                .catch(error => console.error('Error loading assignments:', error));
+
+            // Load statistics
+            fetch(`${API_BASE_URL}/api/batteries/stats/summary`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalBatteriesCount').textContent = data.stats.total;
+                        document.getElementById('availableBatteriesCount').textContent = data.stats.available;
+                        document.getElementById('inUseBatteriesCount').textContent = data.stats.in_use;
+                        document.getElementById('overdueBatteriesCount').textContent = data.stats.overdue;
+                    }
+                })
+                .catch(error => console.error('Error loading battery stats:', error));
+        }
+
+        function showAddBatteryModal() {
+            document.getElementById('newBatteryNumber').value = '';
+            document.getElementById('newBatteryVehicleType').value = 'motorcycle';
+            
+            // Stop scanner if active
+            if (addBatteryScannerActive) {
+                stopAddBatteryScanner();
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('addBatteryModal'));
+            modal.show();
+        }
+
+        function saveNewBattery() {
+            const batteryNumber = document.getElementById('newBatteryNumber').value.trim();
+            const vehicleType = document.getElementById('newBatteryVehicleType').value;
+
+            if (!batteryNumber) {
+                showToast('Please enter battery number', 'warning');
+                return;
+            }
+
+            fetch(`${API_BASE_URL}/api/batteries`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    battery_number: batteryNumber,
+                    vehicle_type: vehicleType
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Battery ${batteryNumber} added successfully!`, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addBatteryModal')).hide();
+                    setTimeout(() => loadBatteryData(), 500);
+                } else {
+                    showToast('Failed to add battery: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding battery:', error);
+                showToast('Error adding battery', 'danger');
+            });
+        }
+
+        function issueBattery() {
+            const riderId = document.getElementById('batteryRiderSelect').value;
+            const batteryNumber = document.getElementById('batteryNumberInput').value.trim();
+            const vehicleType = document.getElementById('batteryVehicleType').value;
+            const vehicleReg = document.getElementById('batteryVehicleReg').value;
+            const notes = document.getElementById('batteryIssueNotes').value.trim();
+
+            if (!riderId) {
+                showToast('Please select a rider', 'warning');
+                return;
+            }
+
+            if (!batteryNumber) {
+                showToast('Please enter or scan battery number', 'warning');
+                return;
+            }
+
+            // Check if battery exists in database
+            const battery = currentBatteries.find(b => b.battery_number === batteryNumber);
+            if (!battery) {
+                showToast(`Battery "${batteryNumber}" not found in database. Please register it first.`, 'danger');
+                return;
+            }
+
+            // Check if battery is available
+            if (battery.status !== 'available') {
+                showToast(`Battery "${batteryNumber}" is currently ${battery.status}. Please select an available battery.`, 'warning');
+                return;
+            }
+
+            const rider = currentRiders.find(r => r.rider_id === riderId);
+            if (!rider) {
+                showToast('Rider not found', 'danger');
+                return;
+            }
+
+            fetch(`${API_BASE_URL}/api/battery-assignments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    battery_number: batteryNumber,
+                    rider_id: riderId,
+                    rider_name: rider.name,
+                    vehicle_type: vehicleType,
+                    vehicle_registration: vehicleReg,
+                    notes: notes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Battery ${batteryNumber} issued to ${rider.name}!`, 'success');
+                    
+                    // Reset form
+                    document.getElementById('batteryNumberInput').value = '';
+                    document.getElementById('batteryVehicleReg').selectedIndex = 0;
+                    document.getElementById('batteryIssueNotes').value = '';
+                    
+                    setTimeout(() => loadBatteryData(), 500);
+                } else {
+                    showToast('Failed to issue battery: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error issuing battery:', error);
+                showToast('Error issuing battery', 'danger');
+            });
+        }
+
+        function returnBattery(assignmentId) {
+            if (!confirm('Mark this battery as returned?')) return;
+
+            fetch(`${API_BASE_URL}/api/battery-assignments/${assignmentId}/return`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: 'Returned via UI' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Battery returned successfully!', 'success');
+                    setTimeout(() => loadBatteryData(), 500);
+                } else {
+                    showToast('Failed to return battery: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error returning battery:', error);
+                showToast('Error returning battery', 'danger');
+            });
+        }
+
+        function updateBatteryInventory() {
+            const tbody = document.getElementById('batteryInventoryTable');
+            
+            if (currentBatteries.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-battery-quarter fa-2x mb-2"></i>
+                            <p>No batteries registered yet</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = currentBatteries.map(battery => {
+                const statusBadge = battery.status === 'available' ? 'bg-success' :
+                                  battery.status === 'in_use' ? 'bg-warning' :
+                                  battery.status === 'charging' ? 'bg-info' :
+                                  battery.status === 'maintenance' ? 'bg-danger' : 'bg-secondary';
+
+                // Find current assignment if battery is in use
+                const assignment = currentBatteryAssignments.find(a => 
+                    a.battery_number === battery.battery_number && a.status === 'active'
+                );
+
+                // Count total times this battery has been used
+                const timesUsed = currentBatteryAssignments.filter(a => 
+                    a.battery_number === battery.battery_number
+                ).length;
+
+                return `
+                    <tr>
+                        <td>
+                            <strong>${battery.battery_number}</strong>
+                            <br><small class="text-muted">Click to view history</small>
+                        </td>
+                        <td>${battery.vehicle_type}</td>
+                        <td>${battery.vehicle_registration || 'N/A'}</td>
+                        <td><span class="badge ${statusBadge}">${battery.status}</span></td>
+                        <td>
+                            <span class="badge bg-info">${timesUsed}</span>
+                            <button class="btn btn-sm btn-link p-0 ms-2" onclick="showBatteryHistory('${battery.battery_number}')" title="View full history">
+                                <i class="fas fa-history"></i>
+                            </button>
+                        </td>
+                        <td>${assignment ? assignment.rider_name : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteBattery('${battery.battery_number}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update usage statistics
+            updateBatteryUsageStats();
+        }
+
+        function updateActiveBatteryAssignments() {
+            const container = document.getElementById('activeBatteryAssignmentsList');
+            const activeAssignments = currentBatteryAssignments.filter(a => a.status === 'active');
+
+            if (activeAssignments.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-battery-empty fa-2x mb-2"></i>
+                        <p>No active battery assignments</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = activeAssignments.map(assignment => {
+                const issueTime = formatDate(assignment.issue_time);
+                return `
+                    <div class="card mb-2">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <strong>${assignment.battery_number}</strong>
+                                    <br><small class="text-muted">${assignment.rider_name}</small>
+                                    <br><small>${assignment.vehicle_type} - ${assignment.vehicle_registration || 'N/A'}</small>
+                                    <br><small class="text-muted">Issued: ${issueTime}</small>
+                                </div>
+                                <button class="btn btn-sm btn-success" onclick="returnBattery('${assignment.assignment_id}')">
+                                    <i class="fas fa-check"></i> Return
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateBatteryHistory() {
+            const tbody = document.getElementById('batteryHistoryTable');
+
+            if (currentBatteryAssignments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p>No assignment history yet</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = currentBatteryAssignments.map(assignment => {
+                const statusBadge = assignment.status === 'active' ? 'bg-warning' : 'bg-success';
+                return `
+                    <tr>
+                        <td><small>${assignment.assignment_id}</small></td>
+                        <td>${assignment.battery_number}</td>
+                        <td>${assignment.rider_name}<br><small class="text-muted">${assignment.rider_id}</small></td>
+                        <td>${assignment.vehicle_type}<br><small>${assignment.vehicle_registration || 'N/A'}</small></td>
+                        <td><small>${formatDate(assignment.issue_time)}</small></td>
+                        <td><small>${assignment.return_time ? formatDate(assignment.return_time) : '-'}</small></td>
+                        <td><span class="badge ${statusBadge}">${assignment.status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function deleteBattery(batteryNumber) {
+            if (!confirm(`Delete battery ${batteryNumber}?`)) return;
+
+            fetch(`${API_BASE_URL}/api/batteries/${encodeURIComponent(batteryNumber)}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Battery deleted successfully', 'success');
+                    setTimeout(() => loadBatteryData(), 500);
+                } else {
+                    showToast('Failed to delete battery: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting battery:', error);
+                showToast('Error deleting battery', 'danger');
+            });
+        }
+
+        function showBatteryHistory(batteryNumber) {
+            const history = currentBatteryAssignments.filter(a => a.battery_number === batteryNumber);
+            
+            if (history.length === 0) {
+                showToast(`No history found for ${batteryNumber}`, 'info');
+                return;
+            }
+
+            // Create modal content
+            const historyHtml = `
+                <div class="modal fade" id="batteryHistoryModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-history me-2"></i>Battery History: ${batteryNumber}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Total Uses:</strong> ${history.length}</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Rider</th>
+                                                <th>Vehicle</th>
+                                                <th>Issued</th>
+                                                <th>Returned</th>
+                                                <th>Duration</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${history.map((h, index) => {
+                                                const duration = h.return_time ? 
+                                                    calculateDuration(h.issue_time, h.return_time) : 
+                                                    'Still out';
+                                                return `
+                                                    <tr>
+                                                        <td>${index + 1}</td>
+                                                        <td>${h.rider_name}</td>
+                                                        <td>${h.vehicle_type}<br><small>${h.rider_number_plate || 'N/A'}</small></td>
+                                                        <td><small>${formatDate(h.issue_time)}</small></td>
+                                                        <td><small>${h.return_time ? formatDate(h.return_time) : '-'}</small></td>
+                                                        <td>${duration}</td>
+                                                        <td><span class="badge ${h.status === 'active' ? 'bg-warning' : 'bg-success'}">${h.status}</span></td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('batteryHistoryModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', historyHtml);
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('batteryHistoryModal'));
+            modal.show();
+
+            // Clean up after modal is hidden
+            document.getElementById('batteryHistoryModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+
+        function calculateDuration(startTime, endTime) {
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            const diffMs = end - start;
+            const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (diffHrs > 0) {
+                return `${diffHrs}h ${diffMins}m`;
+            } else {
+                return `${diffMins}m`;
+            }
+        }
+
+        function updateBatteryUsageStats() {
+            // Calculate most used batteries
+            const batteryUsageCount = {};
+            currentBatteryAssignments.forEach(assignment => {
+                batteryUsageCount[assignment.battery_number] = (batteryUsageCount[assignment.battery_number] || 0) + 1;
+            });
+
+            // Sort by usage count
+            const sortedBatteries = Object.entries(batteryUsageCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            // Display most used batteries
+            const mostUsedDiv = document.getElementById('mostUsedBatteriesList');
+            if (sortedBatteries.length === 0) {
+                mostUsedDiv.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-battery-half fa-2x mb-2"></i>
+                        <p>No usage data yet</p>
+                    </div>
+                `;
+            } else {
+                mostUsedDiv.innerHTML = sortedBatteries.map(([batteryNum, count]) => {
+                    const battery = currentBatteries.find(b => b.battery_number === batteryNum);
+                    return `
+                        <div class="card mb-2">
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${batteryNum}</strong>
+                                        <br><small class="text-muted">${battery?.vehicle_type || 'Unknown'} - ${battery?.vehicle_registration || 'N/A'}</small>
+                                    </div>
+                                    <span class="badge bg-primary">${count} uses</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Display recent activity
+            const recentActivity = currentBatteryAssignments
+                .sort((a, b) => new Date(b.issue_time) - new Date(a.issue_time))
+                .slice(0, 5);
+
+            const recentDiv = document.getElementById('recentBatteryActivityList');
+            if (recentActivity.length === 0) {
+                recentDiv.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p>No recent activity</p>
+                    </div>
+                `;
+            } else {
+                recentDiv.innerHTML = recentActivity.map(assignment => {
+                    const timeAgo = getTimeAgo(assignment.issue_time);
+                    return `
+                        <div class="card mb-2">
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <strong>${assignment.battery_number}</strong>
+                                        <br><small class="text-muted">${assignment.rider_name}</small>
+                                        <br><small class="text-muted">${timeAgo}</small>
+                                    </div>
+                                    <span class="badge ${assignment.status === 'active' ? 'bg-warning' : 'bg-success'}">${assignment.status}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffMins < 60) {
+                return `${diffMins} min ago`;
+            } else if (diffHrs < 24) {
+                return `${diffHrs} hr ago`;
+            } else if (diffDays === 1) {
+                return '1 day ago';
+            } else {
+                return `${diffDays} days ago`;
+            }
+        }
+
+        function refreshBatteryData() {
+            loadBatteryData();
+            showToast('Battery data refreshed', 'info');
+        }
+
+        function startBatteryIssueScanner() {
+            if (batteryIssueScannerActive) {
+                stopBatteryIssueScanner();
+                return;
+            }
+
+            const readerDiv = document.getElementById('batteryIssueQrReader');
+            readerDiv.style.display = 'block';
+            document.getElementById('batteryIssueScannerText').textContent = 'Stop Scanner';
+
+            if (!batteryIssueScanner) {
+                batteryIssueScanner = new Html5Qrcode("batteryIssueQrReader");
+            }
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            batteryIssueScanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    document.getElementById('batteryNumberInput').value = decodedText.trim();
+                    showToast('Battery scanned: ' + decodedText, 'success');
+                    playSuccessBeep();
+                    stopBatteryIssueScanner();
+                },
+                (error) => { /* Ignore continuous scan errors */ }
+            ).then(() => {
+                batteryIssueScannerActive = true;
+                showToast('Scanner ready!', 'success');
+            }).catch(err => {
+                console.error('Scanner error:', err);
+                showToast('Camera not accessible', 'danger');
+                readerDiv.style.display = 'none';
+                document.getElementById('batteryIssueScannerText').textContent = 'Start Scanner';
+            });
+        }
+
+        function stopBatteryIssueScanner() {
+            if (!batteryIssueScannerActive || !batteryIssueScanner) return;
+
+            batteryIssueScanner.stop().then(() => {
+                batteryIssueScannerActive = false;
+                document.getElementById('batteryIssueQrReader').style.display = 'none';
+                document.getElementById('batteryIssueScannerText').textContent = 'Start Scanner';
+            }).catch(err => console.error('Error stopping scanner:', err));
+        }
+
+        function startBatteryReturnScanner() {
+            if (batteryReturnScannerActive) {
+                stopBatteryReturnScanner();
+                return;
+            }
+
+            const readerDiv = document.getElementById('batteryReturnQrReader');
+            readerDiv.style.display = 'block';
+            document.getElementById('batteryReturnScannerText').textContent = 'Stop Scanner';
+
+            if (!batteryReturnScanner) {
+                batteryReturnScanner = new Html5Qrcode("batteryReturnQrReader");
+            }
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            batteryReturnScanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    const batteryNumber = decodedText.trim();
+                    // Find active assignment for this battery
+                    const assignment = currentBatteryAssignments.find(a => 
+                        a.battery_number === batteryNumber && a.status === 'active'
+                    );
+
+                    if (assignment) {
+                        returnBattery(assignment.assignment_id);
+                    } else {
+                        showToast('No active assignment for this battery', 'warning');
+                    }
+                    stopBatteryReturnScanner();
+                },
+                (error) => { /* Ignore continuous scan errors */ }
+            ).then(() => {
+                batteryReturnScannerActive = true;
+                showToast('Scanner ready!', 'success');
+            }).catch(err => {
+                console.error('Scanner error:', err);
+                showToast('Camera not accessible', 'danger');
+                readerDiv.style.display = 'none';
+                document.getElementById('batteryReturnScannerText').textContent = 'Start Scanner';
+            });
+        }
+
+        function stopBatteryReturnScanner() {
+            if (!batteryReturnScannerActive || !batteryReturnScanner) return;
+
+            batteryReturnScanner.stop().then(() => {
+                batteryReturnScannerActive = false;
+                document.getElementById('batteryReturnQrReader').style.display = 'none';
+                document.getElementById('batteryReturnScannerText').textContent = 'Start Scanner';
+            }).catch(err => console.error('Error stopping scanner:', err));
+        }
+
+        function startAddBatteryScanner() {
+            if (addBatteryScannerActive) {
+                stopAddBatteryScanner();
+                return;
+            }
+
+            const readerDiv = document.getElementById('addBatteryQrReader');
+            readerDiv.style.display = 'block';
+            document.getElementById('addBatteryScannerText').textContent = 'Stop Scanner';
+
+            if (!addBatteryScanner) {
+                addBatteryScanner = new Html5Qrcode("addBatteryQrReader");
+            }
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            addBatteryScanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    document.getElementById('newBatteryNumber').value = decodedText.trim();
+                    showToast('Battery QR scanned: ' + decodedText, 'success');
+                    playSuccessBeep();
+                    stopAddBatteryScanner();
+                },
+                (error) => { /* Ignore continuous scan errors */ }
+            ).then(() => {
+                addBatteryScannerActive = true;
+                showToast('Scanner ready!', 'success');
+            }).catch(err => {
+                console.error('Scanner error:', err);
+                showToast('Camera not accessible', 'danger');
+                readerDiv.style.display = 'none';
+                document.getElementById('addBatteryScannerText').textContent = 'Scan QR';
+            });
+        }
+
+        function stopAddBatteryScanner() {
+            if (!addBatteryScannerActive || !addBatteryScanner) return;
+
+            addBatteryScanner.stop().then(() => {
+                addBatteryScannerActive = false;
+                document.getElementById('addBatteryQrReader').style.display = 'none';
+                document.getElementById('addBatteryScannerText').textContent = 'Scan QR';
+            }).catch(err => console.error('Error stopping scanner:', err));
+        }
+
         // ============= TAB SWITCHING EVENT LISTENERS =============
         // Listen for Reports tab activation
         document.addEventListener('DOMContentLoaded', function() {
@@ -4074,6 +4955,31 @@
                 dailyReportTab.addEventListener('shown.bs.tab', function (event) {
                     console.log('📄 Daily Report tab opened - loading archived reports...');
                     loadArchivedReports();
+                });
+            }
+
+            // Listen for Battery tab activation
+            const batteryTab = document.getElementById('battery-tab');
+            if (batteryTab) {
+                batteryTab.addEventListener('shown.bs.tab', function (event) {
+                    console.log('🔋 Battery tab opened - loading battery data...');
+                    loadBatteryData();
+                    // Populate rider dropdown
+                    const riderSelect = document.getElementById('batteryRiderSelect');
+                    if (riderSelect && currentRiders.length > 0) {
+                        riderSelect.innerHTML = '<option value="">-- Select Rider --</option>' +
+                            currentRiders.map(r => `<option value="${r.rider_id}">${r.name} (${r.rider_id})</option>`).join('');
+                    }
+                    
+                    // Populate number plate dropdown
+                    const plateSelect = document.getElementById('batteryVehicleReg');
+                    if (plateSelect && currentRiders.length > 0) {
+                        const uniquePlates = [...new Set(currentRiders
+                            .filter(r => r.number_plate && r.number_plate.trim())
+                            .map(r => r.number_plate))].sort();
+                        plateSelect.innerHTML = '<option value="">-- Select Number Plate --</option>' +
+                            uniquePlates.map(plate => `<option value="${plate}">${plate}</option>`).join('');
+                    }
                 });
             }
         });

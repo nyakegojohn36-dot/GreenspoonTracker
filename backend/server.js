@@ -112,6 +112,30 @@ function initializeDatabase() {
             generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         
+        CREATE TABLE IF NOT EXISTS batteries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            battery_number TEXT UNIQUE NOT NULL,
+            vehicle_type TEXT NOT NULL,
+            vehicle_registration TEXT,
+            status TEXT DEFAULT 'available'
+        );
+        
+        CREATE TABLE IF NOT EXISTS battery_assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            assignment_id TEXT UNIQUE NOT NULL,
+            battery_number TEXT NOT NULL,
+            rider_id TEXT NOT NULL,
+            rider_name TEXT NOT NULL,
+            vehicle_type TEXT NOT NULL,
+            vehicle_registration TEXT,
+            destination TEXT,
+            notes TEXT,
+            status TEXT DEFAULT 'active',
+            issue_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+            return_time DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        
         -- Performance indexes for faster queries
         CREATE INDEX IF NOT EXISTS idx_boxes_status ON boxes(status);
         CREATE INDEX IF NOT EXISTS idx_boxes_number ON boxes(box_number);
@@ -119,6 +143,10 @@ function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_trips_status ON trips(status);
         CREATE INDEX IF NOT EXISTS idx_trips_rider_id ON trips(rider_id);
         CREATE INDEX IF NOT EXISTS idx_trips_departure_time ON trips(departure_time);
+        CREATE INDEX IF NOT EXISTS idx_batteries_status ON batteries(status);
+        CREATE INDEX IF NOT EXISTS idx_batteries_number ON batteries(battery_number);
+        CREATE INDEX IF NOT EXISTS idx_battery_assignments_status ON battery_assignments(status);
+        CREATE INDEX IF NOT EXISTS idx_battery_assignments_rider_id ON battery_assignments(rider_id);
     `;
     
     db.exec(sql, (err) => {
@@ -422,6 +450,63 @@ app.post('/api/riders', async (req, res) => {
             success: false,
             error: error.message,
             details: 'Check if rider ID already exists'
+        });
+    }
+});
+
+// Delete a rider
+app.delete('/api/riders/:rider_id', async (req, res) => {
+    try {
+        const { rider_id } = req.params;
+        
+        // Check if rider exists
+        const rider = await dbGet('SELECT * FROM riders WHERE rider_id = ?', [rider_id]);
+        if (!rider) {
+            return res.status(404).json({
+                success: false,
+                error: 'Rider not found'
+            });
+        }
+        
+        // Check if rider has active trips
+        const activeTrips = await dbGet(
+            'SELECT COUNT(*) as count FROM trips WHERE rider_id = ? AND status = "departed"',
+            [rider_id]
+        );
+        
+        if (activeTrips.count > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot delete rider with active trips. Please complete or cancel their trips first.'
+            });
+        }
+        
+        // Check if rider has active battery assignments
+        const activeBatteries = await dbGet(
+            'SELECT COUNT(*) as count FROM battery_assignments WHERE rider_id = ? AND status = "active"',
+            [rider_id]
+        );
+        
+        if (activeBatteries.count > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot delete rider with active battery assignments. Please return batteries first.'
+            });
+        }
+        
+        // Delete the rider
+        await dbRun('DELETE FROM riders WHERE rider_id = ?', [rider_id]);
+        
+        console.log('✅ Rider deleted:', rider_id);
+        res.json({
+            success: true,
+            message: `Rider ${rider.name} deleted successfully`
+        });
+    } catch (error) {
+        console.error('❌ Error deleting rider:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
         });
     }
 });
@@ -990,6 +1075,381 @@ app.get('/api/attendance', async (req, res) => {
         res.status(500).json({ 
             success: false, 
             error: 'Failed to fetch attendance: ' + error.message 
+        });
+    }
+});
+
+// =========== BATTERY MANAGEMENT ENDPOINTS ===========
+// Get all batteries
+app.get('/api/batteries', async (req, res) => {
+    try {
+        const batteries = await dbAll('SELECT * FROM batteries ORDER BY battery_number');
+        res.json({ 
+            success: true, 
+            batteries: batteries,
+            count: batteries.length
+        });
+    } catch (error) {
+        console.error('❌ Error fetching batteries:', error.message);
+        res.status(500).json({ 
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get single battery
+app.get('/api/batteries/:battery_number', async (req, res) => {
+    try {
+        const batteryNumber = decodeURIComponent(req.params.battery_number);
+        const battery = await dbGet('SELECT * FROM batteries WHERE battery_number = ?', [batteryNumber]);
+        
+        if (!battery) {
+            return res.status(404).json({
+                success: false,
+                error: 'Battery not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            battery: battery
+        });
+    } catch (error) {
+        console.error('❌ Error fetching battery:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Create new battery
+app.post('/api/batteries', async (req, res) => {
+    try {
+        const { battery_number, vehicle_type } = req.body;
+        
+        if (!battery_number || !vehicle_type) {
+            return res.status(400).json({
+                success: false,
+                error: 'Battery number and vehicle type are required'
+            });
+        }
+        
+        const result = await dbRun(
+            'INSERT INTO batteries (battery_number, vehicle_type, status) VALUES (?, ?, "available")',
+            [battery_number, vehicle_type]
+        );
+        
+        const newBattery = await dbGet('SELECT * FROM batteries WHERE id = ?', [result.id]);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Battery added successfully',
+            battery: newBattery
+        });
+    } catch (error) {
+        console.error('❌ Error adding battery:', error.message);
+        res.status(500).json({ 
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Update battery
+app.put('/api/batteries/:battery_number', async (req, res) => {
+    try {
+        const { vehicle_type, vehicle_registration, status, notes } = req.body;
+        const batteryNumber = decodeURIComponent(req.params.battery_number);
+        
+        const result = await dbRun(
+            `UPDATE batteries 
+             SET vehicle_type = ?, vehicle_registration = ?, status = ?, notes = ?
+             WHERE battery_number = ?`,
+            [vehicle_type, vehicle_registration, status, notes, batteryNumber]
+        );
+        
+        if (result.changes === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Battery not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: 'Battery updated successfully'
+        });
+    } catch (error) {
+        console.error('❌ Error updating battery:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Delete battery
+app.delete('/api/batteries/:battery_number', async (req, res) => {
+    try {
+        const batteryNumber = decodeURIComponent(req.params.battery_number);
+        const result = await dbRun('DELETE FROM batteries WHERE battery_number = ?', [batteryNumber]);
+        
+        if (result.changes === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Battery not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: 'Battery deleted successfully'
+        });
+    } catch (error) {
+        console.error('❌ Error deleting battery:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get battery statistics
+app.get('/api/batteries/stats/summary', async (req, res) => {
+    try {
+        const total = await dbGet('SELECT COUNT(*) as count FROM batteries');
+        const available = await dbGet('SELECT COUNT(*) as count FROM batteries WHERE status = "available"');
+        const inUse = await dbGet('SELECT COUNT(*) as count FROM batteries WHERE status = "in_use"');
+        const charging = await dbGet('SELECT COUNT(*) as count FROM batteries WHERE status = "charging"');
+        const maintenance = await dbGet('SELECT COUNT(*) as count FROM batteries WHERE status = "maintenance"');
+        const activeAssignments = await dbGet('SELECT COUNT(*) as count FROM battery_assignments WHERE status = "active"');
+        const overdue = await dbGet(
+            `SELECT COUNT(*) as count FROM battery_assignments 
+             WHERE status = 'active' 
+             AND datetime(issue_time, '+24 hours') < datetime('now')`
+        );
+        
+        res.json({
+            success: true,
+            stats: {
+                total: total.count,
+                available: available.count,
+                in_use: inUse.count,
+                charging: charging.count,
+                maintenance: maintenance.count,
+                active_assignments: activeAssignments.count,
+                overdue: overdue.count
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error fetching battery stats:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get all battery assignments
+app.get('/api/battery-assignments', async (req, res) => {
+    try {
+        const assignments = await dbAll(`
+            SELECT ba.*, r.number_plate as rider_number_plate
+            FROM battery_assignments ba
+            LEFT JOIN riders r ON ba.rider_id = r.rider_id
+            ORDER BY ba.issue_time DESC
+        `);
+        res.json({ 
+            success: true, 
+            assignments: assignments,
+            count: assignments.length
+        });
+    } catch (error) {
+        console.error('❌ Error fetching assignments:', error.message);
+        res.status(500).json({ 
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get active battery assignments
+app.get('/api/battery-assignments/active', async (req, res) => {
+    try {
+        const assignments = await dbAll(
+            'SELECT * FROM battery_assignments WHERE status = "active" ORDER BY issue_time DESC'
+        );
+        res.json({ 
+            success: true, 
+            assignments: assignments,
+            count: assignments.length
+        });
+    } catch (error) {
+        console.error('❌ Error fetching active assignments:', error.message);
+        res.status(500).json({ 
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get overdue battery assignments (over 24 hours)
+app.get('/api/battery-assignments/overdue', async (req, res) => {
+    try {
+        const assignments = await dbAll(
+            `SELECT * FROM battery_assignments 
+             WHERE status = 'active' 
+             AND datetime(issue_time, '+24 hours') < datetime('now')
+             ORDER BY issue_time ASC`
+        );
+        res.json({ 
+            success: true, 
+            assignments: assignments,
+            count: assignments.length
+        });
+    } catch (error) {
+        console.error('❌ Error fetching overdue assignments:', error.message);
+        res.status(500).json({ 
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Issue battery to rider
+app.post('/api/battery-assignments', async (req, res) => {
+    try {
+        const { battery_number, rider_id, rider_name, vehicle_type, vehicle_registration, destination, notes } = req.body;
+        
+        if (!battery_number || !rider_id || !rider_name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Battery number, rider ID, and rider name are required'
+            });
+        }
+        
+        // Check if battery exists in database
+        const battery = await dbGet('SELECT * FROM batteries WHERE battery_number = ?', [battery_number]);
+        if (!battery) {
+            return res.status(404).json({
+                success: false,
+                error: `Battery "${battery_number}" not found in database. Please register it first.`
+            });
+        }
+        
+        // Check if battery is available
+        if (battery.status !== 'available') {
+            return res.status(400).json({
+                success: false,
+                error: `Battery "${battery_number}" is currently ${battery.status}. Only available batteries can be issued.`
+            });
+        }
+        
+        // Check if battery already has an active assignment
+        const existingAssignment = await dbGet(
+            'SELECT * FROM battery_assignments WHERE battery_number = ? AND status = "active"',
+            [battery_number]
+        );
+        if (existingAssignment) {
+            return res.status(400).json({
+                success: false,
+                error: `Battery "${battery_number}" is already assigned to ${existingAssignment.rider_name}`
+            });
+        }
+        
+        // Generate unique assignment ID
+        const assignment_id = `BAT-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+        
+        // Insert assignment
+        await dbRun(
+            `INSERT INTO battery_assignments 
+            (assignment_id, battery_number, rider_id, rider_name, vehicle_type, vehicle_registration, destination, notes, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+            [assignment_id, battery_number, rider_id, rider_name, vehicle_type, 
+             vehicle_registration || null, destination || null, notes || null]
+        );
+        
+        // Update battery status
+        await dbRun(
+            'UPDATE batteries SET status = "in_use" WHERE battery_number = ?',
+            [battery_number]
+        );
+        
+        const assignment = await dbGet(
+            'SELECT * FROM battery_assignments WHERE assignment_id = ?',
+            [assignment_id]
+        );
+        
+        res.status(201).json({ 
+            success: true,
+            message: 'Battery issued successfully',
+            assignment: assignment
+        });
+    } catch (error) {
+        console.error('❌ Error issuing battery:', error.message);
+        res.status(500).json({ 
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Return battery
+app.post('/api/battery-assignments/:assignment_id/return', async (req, res) => {
+    try {
+        const { notes } = req.body;
+        const assignmentId = req.params.assignment_id;
+        
+        // Get assignment details
+        const assignment = await dbGet(
+            'SELECT * FROM battery_assignments WHERE assignment_id = ?',
+            [assignmentId]
+        );
+        
+        if (!assignment) {
+            return res.status(404).json({
+                success: false,
+                error: 'Assignment not found'
+            });
+        }
+        
+        if (assignment.status !== 'active') {
+            return res.status(400).json({
+                success: false,
+                error: 'Assignment is not active'
+            });
+        }
+        
+        // Update assignment
+        await dbRun(
+            `UPDATE battery_assignments 
+             SET status = 'returned', 
+                 return_time = datetime('now'),
+                 notes = CASE 
+                     WHEN notes IS NULL OR notes = '' THEN ? 
+                     ELSE notes || '; ' || ? 
+                 END
+             WHERE assignment_id = ?`,
+            [notes || 'Returned', notes || 'Returned', assignmentId]
+        );
+        
+        // Update battery status
+        await dbRun(
+            'UPDATE batteries SET status = "available" WHERE battery_number = ?',
+            [assignment.battery_number]
+        );
+        
+        res.json({ 
+            success: true,
+            message: 'Battery returned successfully' 
+        });
+    } catch (error) {
+        console.error('❌ Error returning battery:', error.message);
+        res.status(500).json({ 
+            success: false,
+            error: error.message
         });
     }
 });

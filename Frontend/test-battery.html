@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Battery Test</title>
+</head>
+<body>
+    <h1>Battery Management Test</h1>
+    <p>If you see this page, the server is working.</p>
+    <button onclick="checkAPI()">Test Battery API</button>
+    <div id="result"></div>
+
+    <script>
+        async function checkAPI() {
+            try {
+                const response = await fetch('/api/batteries');
+                const data = await response.json();
+                document.getElementById('result').innerHTML = 
+                    '<h3>✅ Battery API Works!</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<h3>❌ Error:</h3><p>' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

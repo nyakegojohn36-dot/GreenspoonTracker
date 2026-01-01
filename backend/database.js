@@ -117,6 +117,53 @@ class Database {
                     FOREIGN KEY (trip_id) REFERENCES trips(trip_id)
                 );
                 
+                -- Batteries table for vehicle/motorcycle battery tracking
+                CREATE TABLE IF NOT EXISTS batteries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    battery_number TEXT UNIQUE NOT NULL,
+                    vehicle_type TEXT CHECK(vehicle_type IN ('motorcycle', 'vehicle')) NOT NULL,
+                    vehicle_registration TEXT,
+                    status TEXT CHECK(status IN ('available', 'in_use', 'charging', 'maintenance', 'retired')) DEFAULT 'available',
+                    qr_code TEXT,
+                    color TEXT DEFAULT '#ffc107',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    notes TEXT
+                );
+                
+                -- Battery assignments table
+                CREATE TABLE IF NOT EXISTS battery_assignments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    assignment_id TEXT UNIQUE NOT NULL,
+                    battery_number TEXT NOT NULL,
+                    rider_id TEXT NOT NULL,
+                    rider_name TEXT NOT NULL,
+                    vehicle_type TEXT NOT NULL,
+                    vehicle_registration TEXT,
+                    destination TEXT,
+                    notes TEXT,
+                    status TEXT DEFAULT 'active',
+                    issue_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    return_time DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (battery_number) REFERENCES batteries(battery_number),
+                    FOREIGN KEY (rider_id) REFERENCES riders(rider_id)
+                );
+                
+                -- Battery movements tracking
+                CREATE TABLE IF NOT EXISTS battery_movements (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    battery_number TEXT NOT NULL,
+                    from_status TEXT,
+                    to_status TEXT,
+                    rider_id TEXT,
+                    assignment_id TEXT,
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (battery_number) REFERENCES batteries(battery_number),
+                    FOREIGN KEY (assignment_id) REFERENCES battery_assignments(assignment_id)
+                );
+                
                 -- Ensure the old trips table is migrated if it exists
                 CREATE TABLE IF NOT EXISTS old_trips_backup (
                     id INTEGER,
