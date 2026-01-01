@@ -1,4 +1,4 @@
-const CACHE_NAME = 'greenspoon-v1.5-battery';
+const CACHE_NAME = 'greenspoon-v2.0-deployed';
 const urlsToCache = [
   '/coolerbox.jpg',
   '/logo.png'
