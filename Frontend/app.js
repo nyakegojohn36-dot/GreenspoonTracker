@@ -3099,6 +3099,288 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ============= DEPARTURE MODE FUNCTIONS =============
+let departureState = {
+    selectedRider: null,
+    boxes: []
+};
+
+function loadDepartureRiders() {
+    try {
+        const riders = DB.getDatabase().riders || [];
+        const activeRiders = riders.filter(r => r.isActive);
+        
+        const select = document.getElementById('departureRider');
+        if (select) {
+            select.innerHTML = '<option value="">-- Choose Rider --</option>';
+            activeRiders.forEach(rider => {
+                const option = document.createElement('option');
+                option.value = rider.id;
+                option.textContent = `${rider.name} (${rider.code})`;
+                select.appendChild(option);
+            });
+        }
+        
+        loadRecentDepartures();
+    } catch (error) {
+        console.error('Error loading departure riders:', error);
+    }
+}
+
+function confirmRider() {
+    const riderSelect = document.getElementById('departureRider');
+    const riderId = riderSelect?.value;
+    
+    if (!riderId) {
+        alert('Please select a rider');
+        return;
+    }
+    
+    const riders = DB.getDatabase().riders || [];
+    // Match by rider_id (like "R-001"), not by database id
+    const rider = riders.find(r => r.rider_id === riderId);
+    
+    if (!rider) {
+        alert('Rider not found');
+        return;
+    }
+    
+    departureState.selectedRider = rider;
+    departureState.boxes = [];
+    
+    document.getElementById('selectedRiderName').textContent = `${rider.name} (${rider.rider_id})`;
+    document.getElementById('step1Section').style.display = 'none';
+    document.getElementById('step2Section').style.display = 'block';
+    document.getElementById('departureBoxInput').focus();
+}
+
+function backToRiderSelection() {
+    departureState.selectedRider = null;
+    departureState.boxes = [];
+    
+    document.getElementById('step2Section').style.display = 'none';
+    document.getElementById('step1Section').style.display = 'block';
+    document.getElementById('departureRider').value = '';
+}
+
+function addDepartureBox() {
+    const input = document.getElementById('departureBoxInput');
+    let boxNumber = input?.value.trim().toUpperCase();
+    
+    if (!boxNumber) {
+        alert('Please enter a box number');
+        return;
+    }
+    
+    // Format box number
+    boxNumber = formatBoxNumber(boxNumber);
+    
+    // Check if box exists
+    const boxes = DB.getDatabase().boxes || [];
+    const box = boxes.find(b => b.boxNumber === boxNumber);
+    
+    if (!box) {
+        alert('Box not found: ' + boxNumber);
+        return;
+    }
+    
+    if (box.status !== 'available') {
+        alert('Box is not available. Current status: ' + box.status);
+        return;
+    }
+    
+    // Check if already added
+    if (departureState.boxes.find(b => b.boxNumber === boxNumber)) {
+        alert('Box already added');
+        return;
+    }
+    
+    departureState.boxes.push(box);
+    input.value = '';
+    updateDepartureBoxList();
+    input.focus();
+}
+
+function updateDepartureBoxList() {
+    const list = document.getElementById('departureBoxList');
+    if (!list) return;
+    
+    if (departureState.boxes.length === 0) {
+        list.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No boxes added yet</div>';
+        return;
+    }
+    
+    list.innerHTML = departureState.boxes.map(box => `
+        <div class="box-list-item">
+            <div>
+                <strong>${box.boxNumber}</strong>
+                <span class="badge ${box.type === 'Big' ? 'box-type-big' : 'box-type-small'} ms-2">${box.type}</span>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeDepartureBox('${box.boxNumber}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function removeDepartureBox(boxNumber) {
+    departureState.boxes = departureState.boxes.filter(b => b.boxNumber !== boxNumber);
+    updateDepartureBoxList();
+}
+
+function showDepartureSummary() {
+    if (departureState.boxes.length === 0) {
+        alert('Please add at least one box');
+        return;
+    }
+    
+    const summaryDiv = document.getElementById('departureSummary');
+    if (summaryDiv) {
+        summaryDiv.innerHTML = `
+            <div class="alert alert-info mb-3">
+                <strong>Rider:</strong> ${departureState.selectedRider.name} (${departureState.selectedRider.code})
+            </div>
+            <div class="alert alert-success mb-3">
+                <strong>Total Boxes:</strong> ${departureState.boxes.length}
+            </div>
+            <div class="list-group mb-3">
+                ${departureState.boxes.map(box => `
+                    <div class="list-group-item">
+                        <strong>${box.boxNumber}</strong>
+                        <span class="badge ${box.type === 'Big' ? 'box-type-big' : 'box-type-small'} ms-2">${box.type}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    document.getElementById('step2Section').style.display = 'none';
+    document.getElementById('step3Section').style.display = 'block';
+}
+
+function backToBoxScanning() {
+    document.getElementById('step3Section').style.display = 'none';
+    document.getElementById('step2Section').style.display = 'block';
+}
+
+function confirmDeparture() {
+    if (!departureState.selectedRider || departureState.boxes.length === 0) {
+        alert('Invalid departure data');
+        return;
+    }
+    
+    try {
+        const db = DB.getDatabase();
+        
+        // Create trip
+        const trip = {
+            id: 'TRIP-' + Date.now(),
+            riderId: departureState.selectedRider.id,
+            riderName: departureState.selectedRider.name,
+            boxes: departureState.boxes.map(b => b.boxNumber),
+            departureTime: new Date().toISOString(),
+            returnTime: null,
+            status: 'active'
+        };
+        
+        db.trips = db.trips || [];
+        db.trips.push(trip);
+        
+        // Update box statuses
+        departureState.boxes.forEach(box => {
+            const dbBox = db.boxes.find(b => b.boxNumber === box.boxNumber);
+            if (dbBox) {
+                dbBox.status = 'in_transit';
+                dbBox.currentRider = departureState.selectedRider.id;
+                dbBox.lastDeparture = new Date().toISOString();
+            }
+        });
+        
+        DB.saveDatabase(db);
+        
+        alert(`Departure confirmed!\n${departureState.boxes.length} boxes dispatched to ${departureState.selectedRider.name}`);
+        
+        // Reset and go back to step 1
+        departureState = { selectedRider: null, boxes: [] };
+        document.getElementById('step3Section').style.display = 'none';
+        document.getElementById('step1Section').style.display = 'block';
+        
+        loadDepartureRiders();
+        
+        // Update dashboard
+        if (window.tracker) {
+            tracker.updateDashboard();
+            tracker.loadRecentActivity();
+        }
+    } catch (error) {
+        console.error('Error confirming departure:', error);
+        alert('Error confirming departure. Please try again.');
+    }
+}
+
+function loadRecentDepartures() {
+    try {
+        const db = DB.getDatabase();
+        const trips = db.trips || [];
+        const recentTrips = trips
+            .filter(t => t.status === 'active')
+            .sort((a, b) => new Date(b.departureTime) - new Date(a.departureTime))
+            .slice(0, 5);
+        
+        const list = document.getElementById('recentDeparturesList');
+        if (!list) return;
+        
+        if (recentTrips.length === 0) {
+            list.innerHTML = '<div class="text-center text-muted py-3">No recent departures</div>';
+            return;
+        }
+        
+        list.innerHTML = recentTrips.map(trip => {
+            const time = new Date(trip.departureTime);
+            const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${trip.riderName}</strong>
+                            <div class="text-muted small">${trip.boxes.length} boxes</div>
+                        </div>
+                        <small class="text-muted">${timeStr}</small>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading recent departures:', error);
+    }
+}
+
+function formatBoxNumber(input) {
+    // Remove all spaces and hyphens
+    let cleaned = input.replace(/[\s\-]/g, '');
+    
+    // Check if it starts with GS
+    if (!cleaned.startsWith('GS')) {
+        return input; // Return as is if not in expected format
+    }
+    
+    // Extract parts: GS + B/L + number
+    const prefix = cleaned.substring(0, 2); // GS
+    const type = cleaned.substring(2, 3).toUpperCase(); // B or L
+    const number = cleaned.substring(3); // remaining numbers
+    
+    // Format as GS-B - 0001 or GS-L - 0001
+    return `${prefix}-${type} - ${number.padStart(4, '0')}`;
+}
+
+// Initialize departure mode when tab is shown
+document.addEventListener('DOMContentLoaded', () => {
+    const departureTab = document.querySelector('[data-bs-target="#departure"]');
+    if (departureTab) {
+        departureTab.addEventListener('shown.bs.tab', loadDepartureRiders);
+    }
+});
+
 // Export for module systems (if needed)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { GreenspoonTracker, addToActivityFeed };

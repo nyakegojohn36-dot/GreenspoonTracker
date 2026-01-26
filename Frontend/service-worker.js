@@ -1,14 +1,17 @@
 const CACHE_NAME = 'greenspoon-v2.0-deployed';
 const urlsToCache = [
-  '/coolerbox.jpg',
-  '/logo.png'
+  '/',
+  '/index.html',
+  '/style.css'
 ];
 
 // Install service worker
 self.addEventListener('install', event => {
+  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
+        console.log('Opened cache');
         // Cache files individually with error handling
         return Promise.allSettled(
           urlsToCache.map(url => 

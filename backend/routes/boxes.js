@@ -304,6 +304,51 @@ router.get('/qr/:qr_code', async (req, res) => {
     }
 });
 
+// POST - Return boxes (update status from in_transit to available or repair)
+router.post('/return', async (req, res) => {
+    try {
+        console.log('📥 RETURN BOXES:', req.body);
+        
+        const { boxes, status } = req.body;
+        
+        if (!boxes || !Array.isArray(boxes) || boxes.length === 0) {
+            return res.status(400).json({ error: 'Boxes array required' });
+        }
+        
+        if (!status || !['available', 'repair'].includes(status)) {
+            return res.status(400).json({ error: 'Status must be "available" or "repair"' });
+        }
+        
+        // Update each box status
+        const results = [];
+        for (const boxNumber of boxes) {
+            const normalizedBoxNumber = normalizeBoxNumber(boxNumber);
+            
+            try {
+                await db.run(
+                    `UPDATE boxes SET status = ? WHERE box_number = ?`,
+                    [status, normalizedBoxNumber]
+                );
+                results.push({ box_number: normalizedBoxNumber, success: true });
+                console.log(`✅ Updated ${normalizedBoxNumber} to ${status}`);
+            } catch (error) {
+                console.error(`❌ Failed to update ${normalizedBoxNumber}:`, error);
+                results.push({ box_number: normalizedBoxNumber, success: false, error: error.message });
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Processed ${results.filter(r => r.success).length} of ${boxes.length} boxes`,
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('❌ Return boxes error:', error);
+        res.status(500).json({ error: 'Failed to return boxes', details: error.message });
+    }
+});
+
 // POST - Emergency registration (for testing/debugging)
 router.post('/emergency', async (req, res) => {
     try {

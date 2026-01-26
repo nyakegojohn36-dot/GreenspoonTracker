@@ -117,7 +117,11 @@ function initializeDatabase() {
             battery_number TEXT UNIQUE NOT NULL,
             vehicle_type TEXT NOT NULL,
             vehicle_registration TEXT,
-            status TEXT DEFAULT 'available'
+            status TEXT DEFAULT 'available',
+            times_used INTEGER DEFAULT 0,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         
         CREATE TABLE IF NOT EXISTS battery_assignments (
@@ -435,6 +439,97 @@ app.delete('/api/boxes/:box_number', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message
+        });
+    }
+});
+
+// Return boxes - update status from in_transit to available or repair
+app.post('/api/boxes/return', async (req, res) => {
+    try {
+        console.log('📥 RETURN BOXES:', req.body);
+        
+        const { boxes, status } = req.body;
+        
+        if (!boxes || !Array.isArray(boxes) || boxes.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Boxes array required'
+            });
+        }
+        
+        if (!status || !['available', 'repair'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Status must be "available" or "repair"'
+            });
+        }
+        
+        // Update each box status
+        const results = [];
+        for (const boxNumber of boxes) {
+            try {
+                const result = await dbRun(
+                    'UPDATE boxes SET status = ? WHERE box_number = ?',
+                    [status, boxNumber]
+                );
+                
+                if (result.changes > 0) {
+                    results.push({ box_number: boxNumber, success: true });
+                    console.log(`✅ Updated ${boxNumber} to ${status}`);
+                } else {
+                    results.push({ box_number: boxNumber, success: false, error: 'Box not found' });
+                }
+            } catch (error) {
+                console.error(`❌ Failed to update ${boxNumber}:`, error);
+                results.push({ box_number: boxNumber, success: false, error: error.message });
+            }
+        }
+        
+        // Update trips - find trips that contain these boxes and update their status
+        const trips = await dbAll(
+            'SELECT * FROM trips WHERE status = ?',
+            ['departed']
+        );
+        
+        for (const trip of trips) {
+            try {
+                const tripBoxes = typeof trip.boxes === 'string' ? JSON.parse(trip.boxes) : trip.boxes || [];
+                
+                // Check if any returned boxes are in this trip
+                const hasReturnedBoxes = tripBoxes.some(box => boxes.includes(box));
+                
+                if (hasReturnedBoxes) {
+                    // Check if all boxes in the trip have been returned
+                    const allBoxesReturned = tripBoxes.every(box => boxes.includes(box));
+                    
+                    if (allBoxesReturned) {
+                        // Mark trip as returned
+                        await dbRun(
+                            'UPDATE trips SET status = ?, return_time = CURRENT_TIMESTAMP WHERE id = ?',
+                            ['returned', trip.id]
+                        );
+                        console.log(`✅ Trip ${trip.trip_id} marked as returned`);
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Error updating trip ${trip.id}:`, error);
+            }
+        }
+        
+        const successCount = results.filter(r => r.success).length;
+        
+        res.json({
+            success: true,
+            message: `Processed ${successCount} of ${boxes.length} boxes`,
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('❌ Return boxes error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to return boxes',
+            details: error.message
         });
     }
 });
