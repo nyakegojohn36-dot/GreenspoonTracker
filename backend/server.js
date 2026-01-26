@@ -36,14 +36,15 @@ if (frontendPath) {
 }
 
 // Database setup - use writable location
-// For packaged app, use AppData; for development, use local folder
-const isDev = !process.env.PORTABLE_EXECUTABLE_DIR && !process.pkg;
-const dbPath = isDev 
-    ? path.join(__dirname, '..', 'database', 'greenspoon.db')
-    : path.join(process.env.APPDATA || process.env.HOME, 'GreenspoonTracker', 'greenspoon.db');
+// Railway: use /tmp (Railway's ephemeral filesystem)
+// Local: use database folder
+const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY;
+const dbPath = isRailway
+    ? path.join('/tmp', 'greenspoon.db')
+    : path.join(__dirname, '..', 'database', 'greenspoon.db');
 
 console.log('Database path:', dbPath);
-console.log('Running in:', isDev ? 'Development' : 'Production');
+console.log('Environment:', isRailway ? 'Railway (Cloud)' : 'Local Development');
 
 // Ensure database directory exists
 const dbDir = path.dirname(dbPath);
